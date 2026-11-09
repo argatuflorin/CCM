@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Laborator virtual CCM: Concepția asistată de calculator a convertoarelor de măsurare. Aplicații interactive pentru senzori și circuite de măsurare.">
+  <meta name="description" content="Laborator virtual CCM: Concepția asistată de calculator a convertoarelor de măsurare. Laboratoare și aplicații interactive pentru senzori și circuite de măsurare.">
   <title>CCM — Laborator virtual</title>
   <style>
     :root{font-family:system-ui,"Segoe UI",Arial,sans-serif;color-scheme:light;color:#000;background:#f4f5f3}
@@ -15,15 +15,17 @@
     h1{font-size:clamp(30px,5vw,49px);line-height:1.13;margin:12px 0}
     .discipline{font-size:clamp(18px,2.5vw,24px);margin:0 0 16px;font-weight:600}
     p{line-height:1.6}
+    section{margin-top:34px}
+    section>h2{font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #17664e}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
     .card{display:block;text-decoration:none;color:#000;border:1px solid #b7c5ba;border-radius:16px;padding:25px;background:#fff;transition:transform .15s,border-color .15s,box-shadow .15s}
     .card:hover{transform:translateY(-3px);border-color:#52715b;box-shadow:0 8px 24px #213a2310}
     a:focus-visible{outline:3px solid #17664e;outline-offset:5px}
-    .number{font-size:14px;font-weight:700}
-    .card h2{font-size:22px;line-height:1.3;margin:14px 0 8px}
+    .number{font-size:14px;font-weight:700;color:#17664e}
+    .card h3{font-size:22px;line-height:1.3;margin:14px 0 8px}
     .card p{margin:0 0 20px}
     .open{display:inline-block;font-weight:700;color:#000;border-bottom:1px solid #52715b}
-    footer{margin-top:32px;font-size:13px}
+    footer{margin-top:40px;font-size:13px}
     footer a{color:#000}
     @media(max-width:700px){.grid{grid-template-columns:1fr}main{padding:25px 16px}}
     @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
@@ -37,14 +39,55 @@
       <p class="discipline">Concepția asistată de calculator<br>a convertoarelor de măsurare</p>
       <p>Aplicații interactive pentru studiul senzorilor și al circuitelor de măsurare.<br>Alegeți o aplicație și urmați cerințele îndrumarului disponibil în Moodle.</p>
     </header>
-    <div class="grid">
-      <a class="card" href="CCM_Puntea_Wheatstone.html">
-        <span class="number">PROIECT · SENZORI REZISTIVI</span>
-        <h2>Puntea Wheatstone pentru senzori rezistivi</h2>
-        <p>Echilibru și dezechilibru, sensibilitate, comparație exact–liniarizat și dimensionarea excitației. Aplicații cu Pt100, NTC și marcă tensometrică; fișă individuală după grupa și indicele N.</p>
-        <span class="open">Deschide aplicația →</span>
-      </a>
-    </div>
+
+    <section aria-labelledby="lab">
+      <h2 id="lab">Laboratoare</h2>
+      <div class="grid">
+        <a class="card" href="CCM_L01_Specificatia_Convertorului.html">
+          <span class="number">LABORATOR L01</span>
+          <h3>Specificația convertorului de măsurare</h3>
+          <p>Punctul de plecare al traseului CCM: noțiuni despre convertor și specificațiile de la care se dimensionează lanțul de măsurare.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+        <a class="card" href="CCM_L05_Puntea_Wheatstone.html">
+          <span class="number">LABORATOR L05 · SENZORI REZISTIVI</span>
+          <h3>Puntea Wheatstone pentru senzori rezistivi</h3>
+          <p>Echilibru și dezechilibru, sensibilitate, comparație exact–liniarizat și dimensionarea excitației. Aplicații cu Pt100, NTC și marcă tensometrică; fișă individuală după grupa și indicele N.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+        <a class="card" href="CCM_L06_Amplificator_Instrumentatie.html">
+          <span class="number">LABORATOR L06 · AMPLIFICATOR</span>
+          <h3>Amplificatorul de instrumentație</h3>
+          <p>Lanțul Pt100 → punte → amplificator INA333 → ADC: semnal diferențial, tensiune de mod comun, câștig, offset REF, verificarea limitelor și rezistența R<sub>G</sub>.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+      </div>
+    </section>
+
+    <section aria-labelledby="apl">
+      <h2 id="apl">Aplicații</h2>
+      <div class="grid">
+        <a class="card" href="CCM_A01_Pt100.html">
+          <span class="number">APLICAȚIE A01 · TEMPERATURĂ</span>
+          <h3>Pt100 — lege R(T) și măsurare</h3>
+          <p>Lecție interactivă despre senzorul Pt100: dependența rezistență–temperatură și calculul mărimilor din circuitul de măsurare.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+        <a class="card" href="CCM_A02_Calculator_Termistor_NTC.html">
+          <span class="number">APLICAȚIE A02 · CALCULATOR</span>
+          <h3>Calculator termistor NTC</h3>
+          <p>Ecuația Beta și divizorul rezistiv pentru Arduino / ESP32: temperatură din rezistență, ADC sau tensiune, și invers.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+        <a class="card" href="CCM_A03_Calculator_Termocuplu.html">
+          <span class="number">APLICAȚIE A03 · CALCULATOR</span>
+          <h3>Calculator termocuplu</h3>
+          <p>Calculator interactiv pentru măsurarea temperaturii cu termocuplu.</p>
+          <span class="open">Deschide aplicația →</span>
+        </a>
+      </div>
+    </section>
+
     <footer><a href="https://argatuflorin.github.io/">Florin Ciprian Argatu — Pagina principală</a></footer>
   </main>
 </body>
