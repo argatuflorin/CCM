@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CCM L07 – Filtrul anti-aliasing</title>
+<style>
+:root{--bg:#f3f5f3;--paper:#fff;--ink:#121b19;--green:#17634e;--border:#c7d1ca;--wire:#8a948f;--live:#E24B4A;--off:#c9cfcb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.52 system-ui,Arial}
+main{max-width:1230px;margin:auto;padding:25px}
+header{margin-bottom:20px}
+h1{font-size:clamp(27px,4vw,39px);line-height:1.15;margin:8px 0}
+h2{font-size:22px;margin:0 0 12px}
+p{margin:9px 0}
+.eyebrow{color:var(--green);font-size:13px;font-weight:800;letter-spacing:.08em}
+.card{background:var(--paper);border:1px solid var(--border);padding:20px;border-radius:13px;margin-bottom:16px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fields label{display:block;font-weight:650;font-size:13px}
+.fields input,.fields select{display:block;width:100%;margin-top:4px;font:inherit;color:inherit;border:1px solid #8d9b93;border-radius:5px;padding:7px;background:white}
+button{background:#e1eee6;border:1px solid #83a592;padding:9px 12px;border-radius:7px;color:#11241a;font:inherit;font-weight:650;cursor:pointer;margin:6px 5px 5px 0}
+button:hover{background:#cce1d2}
+.note{background:#eef4ef;border-left:4px solid var(--green);padding:12px;margin:12px 0}
+.warning{background:#fff4df;border-left:4px solid #a56b00;padding:12px;margin:12px 0}
+.error{color:#a01616;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0}
+.stat{background:#f8faf8;border:1px solid #dae2dd;padding:11px;border-radius:9px}
+.stat span{display:block;font-size:12px}.stat b{font-size:17px}
+.formula{background:#f7f8f6;padding:12px;text-align:center;font:19px Cambria,Georgia,serif;overflow:auto;margin:12px 0}
+.scroll{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid #c7d1ca;padding:7px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#eaf2eb}
+svg{max-width:100%;height:auto}
+canvas{width:100%;border:1px solid var(--border);background:white;display:block}
+.muted{color:#475951;font-size:14px}
+/* strat animat (stil tablou Dani) */
+.w{stroke:var(--wire);stroke-width:3;fill:none;transition:stroke .3s}
+.w.on{stroke:var(--live);stroke-dasharray:10 6;animation:flow .8s linear infinite}
+.w.dim{stroke:var(--off)}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.w.on{animation:none}}
+.comp rect,.comp path.body{fill:#fff;stroke:#2c4036;stroke-width:1.6;transition:fill .3s}
+.comp.act rect,.comp.act path.body{fill:#C0DD97}
+.comp.bad rect,.comp.bad path.body{fill:#FCEBEB;stroke:#c62828;stroke-dasharray:5 4}
+.comp .x{display:none;stroke:#c62828;stroke-width:3}
+.comp.bad .x{display:inline}
+svg text{font-family:system-ui,Arial}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.ctl button{width:100%;text-align:left;margin:0;background:#fff}
+.ctl button b{float:right}
+.ctl button.alarm{background:#FCEBEB;border-color:#d99}
+#banner{font-weight:700;padding:10px 12px;border-radius:8px;margin:0 0 10px}
+#log{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;height:190px;overflow:auto;white-space:pre-wrap;margin:0;background:#f8faf8;border:1px solid #dae2dd;border-radius:8px;padding:8px}
+@media(max-width:850px){main{padding:12px}.cols{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media print{body{background:white}main{max-width:none;padding:0}.noPrint,button,canvas,#log{display:none!important}.card{break-inside:avoid;border:1px solid #888}.cols{display:block}table{font-size:10px}.w.on{animation:none}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="eyebrow">CCM · ANUL IV · L07 · SIMULATOR v1.0</div>
+<h1>Filtrul anti-aliasing (Sallen-Key, ordinul 2)</h1>
+<p>Continuarea lanțului din L06: Pt100 → punte → amplificator de instrumentație → <b>filtru trece-jos</b> → ADC. Vezi pe viu ce se întâmplă cu semnalul înainte și după filtru și de ce, fără filtru, ADC-ul „vede” o frecvență care nu există.</p>
+</header>
+
+<section class="card" id="fisa">
+<h2>1. Fișa individuală</h2>
+<div class="fields noPrint">
+<label>Grupa<select id="grupa"><option>141ID</option><option>142ID</option></select></label>
+<label>Indicele N<input id="n" type="number" min="1" max="30" step="1" value="7"></label>
+</div>
+<button id="apply">Aplică varianta N</button><button onclick="window.print()">Tipărește fișa</button>
+<div id="variant" class="note"></div>
+<p class="muted">Reguli de generare: frecvența de eșantionare f<sub>s</sub> = 400 + 20·N Hz; perturbația de înaltă frecvență f<sub>p</sub> = f<sub>s</sub> − (3 + N mod 5) Hz; semnalul util (variația de temperatură) f<sub>u</sub> = 1 Hz; brum de rețea 50 Hz. Amplitudini la ieșirea INA: util 0,8 V, brum 0,3 V, perturbație 0,4 V, peste V<sub>REF</sub> = 1,65 V. ADC de 12 biți, 0…3,3 V.</p>
+</section>
+
+<section class="card">
+<h2>2. Schema animată – lanțul de măsurare</h2>
+<div id="banner"></div>
+<svg id="sch" viewBox="0 0 1000 330" role="img" aria-label="Schema Sallen-Key: ieșirea INA trece prin R1 și R2 spre intrarea plus a amplificatorului operațional repetor; C1 leagă nodul dintre rezistoare de ieșire, C2 leagă intrarea plus la masă; ieșirea merge la ADC. Un comutator permite ocolirea filtrului.">
+<!-- sursa -->
+<rect x="5" y="140" width="135" height="60" rx="8" fill="#eaf2eb" stroke="#2c4036" stroke-width="1.4"/>
+<text x="72" y="165" text-anchor="middle" font-size="14" font-weight="700">Ieșire INA</text>
+<text x="72" y="184" text-anchor="middle" font-size="11" fill="#475951">din L06 · 1,65 V + semnal</text>
+<line id="w0" class="w" x1="140" y1="170" x2="185" y2="170"/>
+<!-- comutator bypass -->
+<circle cx="185" cy="170" r="4" fill="#2c4036"/>
+<line id="sw" x1="185" y1="170" x2="225" y2="170" stroke="#2c4036" stroke-width="3" stroke-linecap="round"/>
+<circle cx="228" cy="170" r="4" fill="#2c4036"/><circle cx="228" cy="95" r="4" fill="#2c4036"/>
+<text x="178" y="200" font-size="12" fill="#475951">S</text>
+<path id="wBy" class="w" d="M228 95 V40 H860 V170"/>
+<text x="470" y="32" font-size="12" fill="#475951">cale fără filtru (bypass)</text>
+<!-- R1 -->
+<line id="w1" class="w" x1="232" y1="170" x2="265" y2="170"/>
+<g id="cR1" class="comp"><rect x="265" y="158" width="70" height="24" rx="3"/><text x="300" y="175" text-anchor="middle" font-size="13">R1</text><line class="x" x1="270" y1="160" x2="330" y2="180"/></g>
+<line id="w2" class="w" x1="335" y1="170" x2="400" y2="170"/>
+<circle cx="400" cy="170" r="4" fill="#2c4036"/><text x="392" y="196" font-size="12" fill="#475951">X</text>
+<!-- R2 -->
+<line id="w3" class="w" x1="400" y1="170" x2="430" y2="170"/>
+<g id="cR2" class="comp"><rect x="430" y="158" width="70" height="24" rx="3"/><text id="tR2" x="465" y="175" text-anchor="middle" font-size="13">R2</text><line class="x" x1="435" y1="160" x2="495" y2="180"/></g>
+<line id="w4" class="w" x1="500" y1="170" x2="560" y2="170"/>
+<circle cx="545" cy="170" r="4" fill="#2c4036"/><text x="538" y="196" font-size="12" fill="#475951">Y</text>
+<!-- C1 feedback -->
+<path id="w5" class="w" d="M400 170 V95 H455"/>
+<g id="cC1" class="comp"><rect x="455" y="83" width="50" height="24" rx="3"/><text x="480" y="100" text-anchor="middle" font-size="13">C1</text><line class="x" x1="458" y1="86" x2="502" y2="104"/></g>
+<path id="w6" class="w" d="M505 95 H735 V170"/>
+<!-- C2 la masă -->
+<line id="w7" class="w" x1="545" y1="170" x2="545" y2="225"/>
+<g id="cC2" class="comp"><rect x="520" y="225" width="50" height="24" rx="3"/><text x="545" y="242" text-anchor="middle" font-size="13">C2</text><line class="x" x1="523" y1="228" x2="567" y2="246"/></g>
+<line x1="545" y1="249" x2="545" y2="275" stroke="#15803d" stroke-width="3"/>
+<line x1="530" y1="275" x2="560" y2="275" stroke="#15803d" stroke-width="3"/><line x1="535" y1="281" x2="555" y2="281" stroke="#15803d" stroke-width="2.5"/><line x1="540" y1="287" x2="550" y2="287" stroke="#15803d" stroke-width="2"/>
+<!-- AO repetor -->
+<g id="cAO" class="comp"><path class="body" d="M600 125 V215 L700 170 Z"/><text x="620" y="153" font-size="15">+</text><text x="620" y="200" font-size="15">−</text><text x="640" y="176" font-size="12">AO</text></g>
+<line id="w8" class="w" x1="560" y1="170" x2="575" y2="170"/><path id="w8b" class="w" d="M575 170 V148 H600"/>
+<path id="w9" class="w" d="M600 195 H585 V250 H735 V170"/>
+<text x="590" y="268" font-size="11" fill="#475951">repetor (câștig 1)</text>
+<line id="w10" class="w" x1="700" y1="170" x2="860" y2="170"/>
+<circle cx="735" cy="170" r="4" fill="#2c4036"/>
+<!-- ADC -->
+<line id="w11" class="w" x1="860" y1="170" x2="880" y2="170"/>
+<rect x="880" y="130" width="105" height="80" rx="8" fill="#ecfdf5" stroke="#15803d" stroke-width="1.5"/>
+<text x="932" y="157" text-anchor="middle" font-size="15" font-weight="700" fill="#14532d">ADC</text>
+<text x="932" y="175" text-anchor="middle" font-size="11" fill="#166534">12 biți · 0–3,3 V</text>
+<circle id="clk" cx="900" cy="195" r="6" fill="#c9cfcb"/><text id="tFs" x="912" y="199" font-size="11" fill="#166534">fs</text>
+<text id="tFc" x="300" y="300" font-size="13" fill="#17634e" font-weight="700"></text>
+</svg>
+<div class="ctl noPrint">
+<button id="bFlt">Filtru <b></b></button>
+<button id="bHum">Brum 50 Hz <b></b></button>
+<button id="bHf">Perturbație HF <b></b></button>
+<button id="bC1">Condensator C1 <b></b></button>
+<button id="bC2">Condensator C2 <b></b></button>
+<button id="bR2">Rezistor R2 <b></b></button>
+</div>
+<p class="muted">Cum se citește: firele roșii animate poartă semnal; componenta verde lucrează; componenta roșie tăiată este defectă. Butoanele schimbă circuitul pe loc, iar jurnalul de mai jos notează ce s-a întâmplat.</p>
+</section>
+
+<div class="cols">
+<section class="card">
+<h2>3. Ecuațiile filtrului</h2>
+<div class="formula">H(s) = 1 / [ s²·R1R2C1C2 + s·C2(R1+R2) + 1 ]</div>
+<div class="formula">f<sub>c</sub> = 1 / (2π √(R1R2C1C2)) &nbsp;·&nbsp; Q = √(R1R2C1C2) / [C2(R1+R2)]</div>
+<div class="formula">Butterworth cu R1 = R2 = R: &nbsp; C1 = 2·C2, &nbsp; R = 1 / (2π f<sub>c</sub> C2 √2)</div>
+<div class="formula">f<sub>alias</sub> = | f<sub>p</sub> − k·f<sub>s</sub> |, &nbsp; k = round(f<sub>p</sub>/f<sub>s</sub>)</div>
+<p class="muted">C1 este condensatorul de reacție (spre ieșire), C2 cel spre masă. Amplificatorul este repetor ideal. Modelul este liniar și ideal (fără limitări de bandă sau de excursie ale AO).</p>
+</section>
+<section class="card">
+<h2>4. Parametri de proiectare</h2>
+<div class="fields">
+<label>f<sub>c</sub> țintă (Hz)<input id="fct" type="number" min="0.5" max="200" step="0.5" value="10"></label>
+<label>C2 (nF)<input id="C2" type="number" min="1" max="10000" step="1" value="100"></label>
+<label>C1 (nF)<input id="C1" type="number" min="1" max="20000" step="1" value="200"></label>
+<label>R1 = R (kΩ)<input id="R" type="number" min="0.1" max="10000" step="0.1" value="112.5"></label>
+</div>
+<label class="noPrint"><input id="bw" type="checkbox" checked> C1 = 2·C2 (Butterworth)</label><br>
+<button id="calcR">Calculează R pentru f<sub>c</sub> țintă</button>
+<button id="record">Adaugă punctul curent</button>
+<label class="noPrint"><input id="mask" type="checkbox"> Ascunde rezultatele până calculez singur</label>
+<div id="error" class="error" role="alert"></div>
+<p class="muted">Cerințe de proiect: (C1) semnalul util la 1 Hz atenuat cel mult 0,1 dB; (C2) brumul de 50 Hz atenuat cel puțin 20 dB; (C3) perturbația, după filtru, sub 1 LSB la ADC (0,806 mV), adică alias invizibil.</p>
+</section>
+</div>
+
+<section class="card">
+<h2>5. Rezultate și diagrama Bode</h2>
+<div class="stats" id="stats"></div>
+<canvas id="bode" width="1180" height="380"></canvas>
+<p class="muted">Curba verde: |H(f)| în dB. Verticale: f<sub>u</sub> (albastru), 50 Hz (portocaliu), f<sub>p</sub> (roșu); zona hașurată este peste f<sub>s</sub>/2 (Nyquist). Linia roșie întreruptă: atenuarea necesară pentru ca perturbația să coboare sub 1 LSB.</p>
+</section>
+
+<section class="card">
+<h2>6. Osciloscop și jurnal</h2>
+<canvas id="scA" width="1180" height="230"></canvas>
+<p class="muted">Canalul A (fereastră 40 ms): gri = intrarea filtrului, verde = ieșirea filtrului. Se vede brumul și perturbația rapidă.</p>
+<canvas id="scB" width="1180" height="260"></canvas>
+<p class="muted">Canalul B (fereastră 2 s): punctele sunt eșantioanele ADC, iar linia albastră întreruptă este semnalul util ideal. Dacă eșantioanele ondulează mai repede decât linia albastră, aceea este frecvența falsă (alias).</p>
+<pre id="log" aria-live="polite"></pre>
+</section>
+
+<section class="card">
+<h2>7. Experimente ghidate</h2>
+<ol>
+<li><b>E1 – Calcul înainte de simulare:</b> pentru varianta ta calculează f<sub>s</sub>, f<sub>s</sub>/2, f<sub>p</sub> și frecvența falsă f<sub>alias</sub>. Notează-le în fișă.</li>
+<li><b>E2 – Fără filtru:</b> pune filtrul pe BYPASS. Pe canalul B numără ondulațiile pe secundă și compară cu f<sub>alias</sub> calculat. Explică de ce ADC-ul vede o frecvență care nu există în circuit.</li>
+<li><b>E3 – Proiectare:</b> alege C2, calculează R și C1 (Butterworth) pentru un f<sub>c</sub> care respectă C1, C2 și C3. Verifică în diagrama Bode și cu banda de stare verde.</li>
+<li><b>E4 – Fereastra de proiectare:</b> caută cel mai mic și cel mai mare f<sub>c</sub> care încă respectă toate cerințele. Adaugă ambele puncte în tabel.</li>
+<li><b>E5 – Defecte:</b> întrerupe pe rând C1, C2, apoi multiplică R2 cu 10. Pentru fiecare caz notează f<sub>c</sub>, Q și ce se vede pe canalul B. Care defect e cel mai periculos pentru măsurare și de ce?</li>
+</ol>
+<p>Capturi solicitate: C1 – canalul B cu filtrul pe BYPASS; C2 – proiectul tău final cu banda verde; C3 – un defect, cu jurnalul vizibil.</p>
+</section>
+
+<section class="card">
+<h2>8. Tabel individual și export CSV</h2>
+<div class="scroll"><table><thead><tr><th>Variantă</th><th>Stare circuit</th><th>R (kΩ)</th><th>C1 (nF)</th><th>C2 (nF)</th><th>fc (Hz)</th><th>Q</th><th>A(1 Hz) dB</th><th>A(50 Hz) dB</th><th>A(fp) dB</th><th>Alias (LSB)</th><th>Cerințe</th></tr></thead><tbody id="records"></tbody></table></div>
+<button id="csv">Export CSV</button><button id="clear">Golește tabelul</button><button onclick="window.print()">Imprimare</button>
+<p class="muted">Datele sunt rezultate calculate local în browser pe un model ideal, nu măsurători fizice.</p>
+</section>
+
+<section class="card">
+<h2>9. Întrebări pentru verificare</h2>
+<ol>
+<li>Ce spune teorema eșantionării și de ce f<sub>s</sub>/2 este o graniță?</li>
+<li>De ce filtrul anti-aliasing trebuie pus <b>înainte</b> de ADC și nu poate fi înlocuit cu o filtrare numerică după conversie?</li>
+<li>Cum se calculează frecvența falsă pentru o perturbație aflată aproape de f<sub>s</sub>?</li>
+<li>Ce rol are C1 (reacția) și ce devine filtrul când C1 lipsește?</li>
+<li>De ce un filtru de ordinul 2 atenuează cu 40 dB/decadă și ce câștigi cu ordinul 4?</li>
+<li>Cum alegi f<sub>c</sub> între semnalul util și perturbații? Ce compromis apare?</li>
+<li>Ce se întâmplă cu Q la R1 ≠ R2 și de ce contează pentru un semnal de măsurare?</li>
+<li>Ce componente reale (toleranțe, AO) ar trebui verificate înainte de montaj?</li>
+</ol>
+<p class="muted">Referințe: [1] Texas Instruments, „Analysis of the Sallen-Key Architecture”, SLOA024, https://www.ti.com/lit/an/sloa024b/sloa024b.pdf ; [2] Analog Devices, MT-002 „What the Nyquist Criterion Means to Your Sampled Data System Design”, https://www.analog.com/media/en/training-seminars/tutorials/MT-002.pdf ; [3] CCM L06, „Amplificatorul de instrumentație”, ARGATU HUB. Simulare didactică pe model ideal.</p>
+</section>
+<footer class="muted">Material didactic · Conf. dr. ing. Florin Argatu · DMAECS, UPB · CCM L07 v1.0 · 15.11.2026</footer>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),num=id=>Number($(id).value);
+const fmt=(x,d=3)=>Number.isFinite(x)?x.toFixed(d):'—';
+const VREF=1.65,AU=0.8,A50=0.3,AP=0.4,FU=1,LSB=3.3/4096;
+let V=null,rows=[],t0=performance.now();
+const S={flt:true,hum:true,hf:true,c1:true,c2:true,r2x:false};
+function log(m){const t=((performance.now()-t0)/1000).toFixed(1).padStart(6);$('log').textContent=`[${t} s] ${m}\n`+$('log').textContent}
+function spec(n,g){const fs=400+20*n,d=3+n%5;return{n,g,fs,fp:fs-d,d}}
+function code(){return `CCM-L07-${V.g}-N${String(V.n).padStart(2,'0')}-v1.0`}
+function apply(){const n=num('n'),g=$('grupa').value;if(!Number.isInteger(n)||n<1||n>(g==='141ID'?30:29)){alert('N invalid pentru grupa selectată.');return}
+V=spec(n,g);rows=[];drawRows();
+const fa=alias(V.fp,V.fs);
+$('variant').innerHTML=`<b>${code()}</b> · f<sub>s</sub> = ${V.fs} Hz · f<sub>s</sub>/2 = ${V.fs/2} Hz · f<sub>p</sub> = ${V.fp} Hz · f<sub>alias</sub> = ${fmt(fa,0)} Hz · f<sub>u</sub> = 1 Hz · 1 LSB = 0,806 mV`;
+$('tFs').textContent='fs = '+V.fs+' Hz';log(`Varianta ${code()} aplicată`);recalc()}
+function alias(f,fs){return Math.abs(f-fs*Math.round(f/fs))}
+function comps(){let R=num('R')*1e3,C1=num('C1')*1e-9,C2=num('C2')*1e-9;
+if(![R,C1,C2].every(x=>Number.isFinite(x)&&x>0))throw Error('R, C1 și C2 trebuie să fie pozitive.');
+let R1=R,R2=S.r2x?10*R:R;if(!S.c1)C1=0;if(!S.c2)C2=0;return{R1,R2,C1,C2}}
+function H(f,c){if(!S.flt)return{re:1,im:0};const w=2*Math.PI*f,a=1-w*w*c.R1*c.R2*c.C1*c.C2,b=w*c.C2*(c.R1+c.R2),d=a*a+b*b;return{re:a/d,im:-b/d}}
+const mag=z=>Math.hypot(z.re,z.im),ph=z=>Math.atan2(z.im,z.re),dB=x=>20*Math.log10(Math.max(x,1e-12));
+function analyse(){const c=comps();let fc=NaN,Q=NaN;
+if(S.flt){if(c.C1>0&&c.C2>0){const p=c.R1*c.R2*c.C1*c.C2;fc=1/(2*Math.PI*Math.sqrt(p));Q=Math.sqrt(p)/(c.C2*(c.R1+c.R2))}else if(c.C2>0){fc=1/(2*Math.PI*c.C2*(c.R1+c.R2));Q=NaN}}
+const hu=mag(H(FU,c)),h50=mag(H(50,c)),hp=mag(H(V.fp,c));
+const resA=S.hf?AP*hp/LSB:0,res50=S.hum?A50*h50:0;
+const ok1=dB(hu)>=-0.1,ok2=dB(h50)<=-20,ok3=AP*hp<LSB;
+return{c,fc,Q,hu,h50,hp,resA,res50,ok1,ok2,ok3,fa:alias(V.fp,V.fs)}}
+let Acur=null;
+function recalc(){if(!V)return;try{$('error').textContent='';const a=analyse();Acur=a;
+const st=[['fc',Number.isFinite(a.fc)?fmt(a.fc,2)+' Hz':(S.flt?'— (fără pol)':'bypass')],['Q',Number.isFinite(a.Q)?fmt(a.Q,3):(Number.isFinite(a.fc)?'ord. 1':'—')],['A(1 Hz)',fmt(dB(a.hu),3)+' dB'],['A(50 Hz)',fmt(dB(a.h50),1)+' dB'],['A(fp)',fmt(dB(a.hp),1)+' dB'],['f alias',fmt(a.fa,0)+' Hz'],['Alias la ADC',fmt(AP*a.hp/LSB,2)+' LSB'],['Cerințe C1/C2/C3',[a.ok1,a.ok2,a.ok3].map(x=>x?'✓':'✗').join(' ')]];
+$('stats').innerHTML=st.map(x=>`<div class="stat"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+$('stats').style.visibility=$('mask').checked?'hidden':'visible';
+$('tFc').textContent=Number.isFinite(a.fc)?`fc = ${fmt(a.fc,2)} Hz${Number.isFinite(a.Q)?' · Q = '+fmt(a.Q,3):''}`:'';
+ui(a);bode(a);computeTraces(a)}catch(e){$('error').textContent=e.message}}
+function ui(a){
+const on=(id,v)=>$(id).classList.toggle('on',!!v),cp=(id,act,bad)=>{$(id).classList.toggle('act',!!act);$(id).classList.toggle('bad',!!bad)};
+const f=S.flt;on('w0',1);on('wBy',!f);['w1','w2','w3','w4','w8','w8b','w9','w10'].forEach(i=>on(i,f));on('w5',f&&S.c1);on('w6',f&&S.c1);on('w7',f&&S.c2);on('w11',1);
+$('sw').setAttribute('x2',f?225:228);$('sw').setAttribute('y2',f?170:99);
+cp('cR1',f,false);cp('cR2',f&&!S.r2x,S.r2x);cp('cC1',f&&S.c1,!S.c1);cp('cC2',f&&S.c2,!S.c2);cp('cAO',f,false);
+$('tR2').textContent=S.r2x?'R2×10':'R2';
+const b=$('banner');let txt,bg,col;
+if(a.resA>=1){txt=`ALIASING! Perturbația de ${V.fp} Hz apare la ADC ca o falsă variație de ${fmt(a.fa,0)} Hz (${fmt(a.resA,1)} LSB).`;bg='#FCEBEB';col='#791F1F'}
+else if(S.hum&&!a.ok2){txt=`Brum 50 Hz insuficient atenuat (${fmt(dB(a.h50),1)} dB, ${fmt(a.res50*1000,1)} mV la ADC). Fără alias, dar măsurarea e zgomotoasă.`;bg='#FAEEDA';col='#633806'}
+else if(!a.ok1){txt=`Semnalul util este atenuat (${fmt(dB(a.hu),2)} dB la 1 Hz): filtrul taie prea jos.`;bg='#FAEEDA';col='#633806'}
+else{txt='Funcționare corectă: alias sub 1 LSB, brum atenuat, semnal util intact.';bg='#EAF3DE';col='#27500A'}
+b.textContent=txt;b.style.background=bg;b.style.color=col;
+const set=(id,t,al)=>{$(id).querySelector('b').textContent=t;$(id).classList.toggle('alarm',!!al)};
+set('bFlt',f?'ACTIV':'BYPASS',!f);set('bHum',S.hum?'PREZENT':'oprit');set('bHf',S.hf?'PREZENTĂ':'oprită');
+set('bC1',S.c1?'OK':'ÎNTRERUPT',!S.c1);set('bC2',S.c2?'OK':'ÎNTRERUPT',!S.c2);set('bR2',S.r2x?'×10 (DEFECT)':'OK',S.r2x)}
+function bode(a){const cv=$('bode'),c=cv.getContext('2d'),W=cv.width,Hh=cv.height,L=70,R=W-25,T=30,B=Hh-45,f0=0.1,f1=10000,ymin=-100,ymax=10;
+const xx=f=>L+(R-L)*Math.log10(f/f0)/Math.log10(f1/f0),yy=y=>T+(B-T)*(ymax-Math.max(ymin,Math.min(ymax,y)))/(ymax-ymin);
+c.clearRect(0,0,W,Hh);c.fillStyle='#fff';c.fillRect(0,0,W,Hh);
+c.fillStyle='rgba(226,75,74,.08)';c.fillRect(xx(V.fs/2),T,R-xx(V.fs/2),B-T);
+c.strokeStyle='#e3e9e5';c.lineWidth=1;c.fillStyle='#111';c.font='14px system-ui';
+for(let y=ymin;y<=ymax;y+=10){c.beginPath();c.moveTo(L,yy(y));c.lineTo(R,yy(y));c.stroke();c.fillText(y,25,yy(y)+5)}
+for(let e=-1;e<=4;e++){const f=10**e;c.beginPath();c.moveTo(xx(f),T);c.lineTo(xx(f),B);c.stroke();c.fillText(f>=1000?f/1000+'k':f,xx(f)-10,B+20)}
+c.fillText('f (Hz)',R-50,Hh-8);c.fillText('dB',25,20);
+const vl=(f,col,lab)=>{c.strokeStyle=col;c.setLineDash([5,4]);c.beginPath();c.moveTo(xx(f),T);c.lineTo(xx(f),B);c.stroke();c.setLineDash([]);c.fillStyle=col;c.fillText(lab,xx(f)+4,T+14)};
+vl(FU,'#1d4ed8','fu');vl(50,'#b96c0c','50 Hz');vl(V.fp,'#c62828','fp');vl(V.fs/2,'#7f1d1d','fs/2');
+const thr=dB(LSB/AP);c.strokeStyle='#c62828';c.setLineDash([10,6]);c.beginPath();c.moveTo(L,yy(thr));c.lineTo(R,yy(thr));c.stroke();c.setLineDash([]);c.fillStyle='#c62828';c.fillText('prag 1 LSB: '+fmt(thr,1)+' dB',L+6,yy(thr)-6);
+c.beginPath();for(let i=0;i<=400;i++){const f=f0*(f1/f0)**(i/400),y=dB(mag(H(f,a.c)));i?c.lineTo(xx(f),yy(y)):c.moveTo(xx(f),yy(y))}c.strokeStyle='#17634e';c.lineWidth=3;c.stroke();c.lineWidth=1;
+[[FU,'#1d4ed8'],[50,'#b96c0c'],[V.fp,'#c62828']].forEach(([f,col])=>{c.beginPath();c.arc(xx(f),yy(dB(mag(H(f,a.c)))),6,0,7);c.fillStyle=col;c.fill()});
+if(Number.isFinite(a.fc)){c.beginPath();c.arc(xx(a.fc),yy(dB(mag(H(a.fc,a.c)))),5,0,7);c.strokeStyle='#111';c.stroke();c.fillStyle='#111';c.fillText('fc',xx(a.fc)-6,yy(dB(mag(H(a.fc,a.c))))+22)}}
+// semnale: regim permanent sinusoidal
+let comp=[];
+function computeTraces(a){const list=[[FU,AU,0]];if(S.hum)list.push([50,A50,0.3]);if(S.hf)list.push([V.fp,AP,1.1]);
+comp=list.map(([f,A,p])=>{const h=H(f,a.c);return{f,A,p,g:mag(h),phi:ph(h)}})}
+const vin=t=>VREF+comp.reduce((s,k)=>s+k.A*Math.sin(2*Math.PI*k.f*t+k.p),0);
+const vout=t=>VREF+comp.reduce((s,k)=>s+k.A*k.g*Math.sin(2*Math.PI*k.f*t+k.p+k.phi),0);
+const q=v=>Math.round(Math.max(0,Math.min(3.3,v))/LSB)*LSB;
+function axes(c,W,Hh,L,R,T,B,vmin,vmax,lab){c.clearRect(0,0,W,Hh);c.fillStyle='#fff';c.fillRect(0,0,W,Hh);c.strokeStyle='#e3e9e5';c.fillStyle='#111';c.font='13px system-ui';
+for(let j=0;j<=4;j++){const v=vmin+(vmax-vmin)*j/4,y=B-(B-T)*j/4;c.beginPath();c.moveTo(L,y);c.lineTo(R,y);c.stroke();c.fillText(v.toFixed(2),8,y+4)}c.fillText(lab,L+4,16)}
+function draw(now){if(!V||!comp.length){requestAnimationFrame(draw);return}
+const ts=(now-t0)/1000;
+// canal A
+let cv=$('scA'),c=cv.getContext('2d'),W=cv.width,Hh=cv.height,L=60,R=W-15,T=24,B=Hh-20,vmin=0,vmax=3.3;
+axes(c,W,Hh,L,R,T,B,vmin,vmax,'Canal A · 40 ms · gri = intrare filtru, verde = ieșire');
+const yy=v=>B-(B-T)*(v-vmin)/(vmax-vmin),tA0=ts*0.05;
+[[vin,'#9aa6a0',1.5],[vout,'#17634e',2.5]].forEach(([fn,col,lw])=>{c.beginPath();for(let i=0;i<=1600;i++){const t=tA0+0.04*i/1600,x=L+(R-L)*i/1600;i?c.lineTo(x,yy(fn(t))):c.moveTo(x,yy(fn(t)))}c.strokeStyle=col;c.lineWidth=lw;c.stroke()});
+// canal B – baleiaj tip osciloscop
+cv=$('scB');c=cv.getContext('2d');W=cv.width;Hh=cv.height;B=Hh-24;
+axes(c,W,Hh,L,R,T,B,vmin,vmax,'Canal B · 2 s · eșantioane ADC (puncte) · albastru = semnal util ideal');
+const yb=v=>B-(B-T)*(v-vmin)/(vmax-vmin),beam=(ts%2.5)/2,N=Math.floor(2*V.fs);
+c.setLineDash([7,5]);c.beginPath();for(let i=0;i<=400;i++){const t=2*i/400;const x=L+(R-L)*i/400,v=VREF+AU*comp[0].g*Math.sin(2*Math.PI*FU*t+comp[0].phi);i?c.lineTo(x,yb(v)):c.moveTo(x,yb(v))}c.strokeStyle='#1d4ed8';c.lineWidth=1.5;c.stroke();c.setLineDash([]);
+c.beginPath();let last=0;for(let k=0;k<=N;k++){const t=k/V.fs;if(t/2>beam)break;const x=L+(R-L)*t/2,v=q(vout(t));k?c.lineTo(x,yb(v)):c.moveTo(x,yb(v));last=x}c.strokeStyle='#c62828';c.lineWidth=1.2;c.stroke();
+if(N<=1200){c.fillStyle='#c62828';for(let k=0;k<=N;k+=1){const t=k/V.fs;if(t/2>beam)break;c.fillRect(L+(R-L)*t/2-1,yb(q(vout(t)))-1,2.4,2.4)}}
+c.strokeStyle='rgba(23,99,78,.5)';c.beginPath();c.moveTo(last,T);c.lineTo(last,B);c.stroke();
+$('clk').setAttribute('fill',Math.floor(ts*4)%2?'#16a34a':'#c9cfcb');
+requestAnimationFrame(draw)}
+function add(){try{const a=analyse();rows.push({code:code(),st:stateTxt(),R:num('R'),C1:S.c1?num('C1'):0,C2:S.c2?num('C2'):0,fc:a.fc,Q:a.Q,au:dB(a.hu),a50:dB(a.h50),ap:dB(a.hp),al:AP*a.hp/LSB,ok:[a.ok1,a.ok2,a.ok3].map(x=>x?'DA':'NU').join('/')});drawRows();log('Punct adăugat în tabel')}catch(e){alert(e.message)}}
+function stateTxt(){const s=[];if(!S.flt)s.push('bypass');if(!S.c1)s.push('C1 întrerupt');if(!S.c2)s.push('C2 întrerupt');if(S.r2x)s.push('R2×10');return s.length?s.join(', '):'normal'}
+function drawRows(){$('records').innerHTML=rows.map(r=>`<tr><td>${r.code}</td><td>${r.st}</td><td>${fmt(r.R,2)}</td><td>${fmt(r.C1,0)}</td><td>${fmt(r.C2,0)}</td><td>${fmt(r.fc,2)}</td><td>${fmt(r.Q,3)}</td><td>${fmt(r.au,3)}</td><td>${fmt(r.a50,1)}</td><td>${fmt(r.ap,1)}</td><td>${fmt(r.al,2)}</td><td>${r.ok}</td></tr>`).join('')}
+function csv(){const d=[['Cod varianta','Versiune','Stare','R (kohm)','C1 (nF)','C2 (nF)','fc (Hz)','Q','A 1Hz (dB)','A 50Hz (dB)','A fp (dB)','Alias (LSB)','Cerinte C1/C2/C3'],...rows.map(r=>[r.code,'1.0',r.st,r.R,r.C1,r.C2,r.fc,r.Q,r.au,r.a50,r.ap,r.al,r.ok])].map(r=>r.join(';')).join('\r\n');
+const b=new Blob(['﻿'+d],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=`${code()}_rezultate.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function tg(k,msg){S[k]=!S[k];log(msg(S[k]));recalc();if(Acur){log(Acur.resA>=1?`→ alias ${fmt(Acur.resA,1)} LSB la ${fmt(Acur.fa,0)} Hz`:`→ alias ${fmt(Acur.resA,2)} LSB (invizibil)`)}}
+$('bFlt').onclick=()=>tg('flt',v=>v?'Comutator S: filtru ACTIV':'Comutator S: BYPASS – semnalul intră direct în ADC');
+$('bHum').onclick=()=>tg('hum',v=>v?'Brum 50 Hz pornit':'Brum 50 Hz oprit');
+$('bHf').onclick=()=>tg('hf',v=>v?`Perturbație ${V.fp} Hz pornită`:'Perturbație oprită');
+$('bC1').onclick=()=>tg('c1',v=>v?'C1 refăcut':'DEFECT: C1 întrerupt – filtrul devine RC de ordinul 1');
+$('bC2').onclick=()=>tg('c2',v=>v?'C2 refăcut':'DEFECT: C2 întrerupt – nu mai există pol, semnalul trece nefiltrat');
+$('bR2').onclick=()=>tg('r2x',v=>v?'DEFECT: R2 montat ×10 – fc scade, Q se schimbă':'R2 refăcut');
+$('calcR').onclick=()=>{const fct=num('fct'),C2=num('C2')*1e-9;if(!(fct>0&&C2>0)){alert('fc țintă și C2 trebuie să fie pozitive');return}if($('bw').checked)$('C1').value=2*num('C2');const C1=num('C1')*1e-9;$('R').value=(1/(2*Math.PI*fct*Math.sqrt(C1*C2))/1000).toFixed(2);log(`R calculat pentru fc = ${fct} Hz: ${$('R').value} kΩ`);recalc()};
+$('bw').onchange=()=>{if($('bw').checked){$('C1').value=2*num('C2');recalc()}};
+$('C2').addEventListener('input',()=>{if($('bw').checked)$('C1').value=2*num('C2')});
+let deb;['R','C1','C2','mask'].forEach(id=>$(id).addEventListener('input',()=>{recalc();clearTimeout(deb);deb=setTimeout(()=>{if(Acur&&Number.isFinite(Acur.fc))log(`Parametri modificați: fc = ${fmt(Acur.fc,2)} Hz, alias ${fmt(Acur.resA,2)} LSB`)},700)}));
+$('apply').onclick=apply;$('record').onclick=add;$('csv').onclick=csv;$('clear').onclick=()=>{rows=[];drawRows()};
+log('Pornire simulator');apply();requestAnimationFrame(draw);
+</script>
+</body></html>
