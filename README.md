@@ -9,18 +9,18 @@ Aplicații interactive (HTML, fără instalare) pentru studiul senzorilor și al
 
 ## Conținut
 
-| Cod | Aplicație | Descriere | Deschide |
-|---|---|---|---|
-| L01 | Specificația convertorului de măsurare | Noțiuni despre convertor și specificațiile lanțului de măsurare | [Deschide](https://argatuflorin.github.io/CCM/CCM_L01_Specificatia_Convertorului.html) |
-| L05 | Puntea Wheatstone pentru senzori rezistivi | Echilibru, sensibilitate, comparație exact–liniarizat, dimensionarea excitației | [Deschide](https://argatuflorin.github.io/CCM/CCM_L05_Puntea_Wheatstone.html) |
-| L06 | Amplificatorul de instrumentație | Pt100 → punte → INA333 → ADC: câștig, mod comun, offset REF, rezistența R<sub>G</sub> | [Deschide](https://argatuflorin.github.io/CCM/CCM_L06_Amplificator_Instrumentatie.html) |
-| A01 | Pt100 — lege R(T) și măsurare | Lecție interactivă despre senzorul Pt100 | [Deschide](https://argatuflorin.github.io/CCM/CCM_A01_Pt100.html) |
-| A02 | Calculator termistor NTC | Ecuația Beta și divizorul rezistiv pentru Arduino / ESP32 | [Deschide](https://argatuflorin.github.io/CCM/CCM_A02_Calculator_Termistor_NTC.html) |
-| A03 | Calculator termocuplu | Calculator interactiv pentru termocuplu | [Deschide](https://argatuflorin.github.io/CCM/CCM_A03_Calculator_Termocuplu.html) |
+| Cod | Lucrare | Aplicație |
+|---|---|---|
+| L01 | Specificația convertorului de măsurare | [CCM_L01_Specificatia_Convertorului_v1.0.html](https://argatuflorin.github.io/CCM/L01/CCM_L01_Specificatia_Convertorului_v1.0.html) |
+| L02 | Termistorul NTC | [CCM_L02_Termistor_NTC_v1.0.html](https://argatuflorin.github.io/CCM/L02/CCM_L02_Termistor_NTC_v1.0.html) |
+| L03 | Termocuplul | [CCM_L03_Termocuplu_v1.0.html](https://argatuflorin.github.io/CCM/L03/CCM_L03_Termocuplu_v1.0.html) |
+| L04 | Pt100 — lege R(T) și măsurare | [CCM_L04_Pt100_v1.0.html](https://argatuflorin.github.io/CCM/L04/CCM_L04_Pt100_v1.0.html) |
+| L05 | Puntea Wheatstone pentru senzori rezistivi | [CCM_L05_Puntea_Wheatstone_v2.0.html](https://argatuflorin.github.io/CCM/L05/CCM_L05_Puntea_Wheatstone_v2.0.html) |
+| L06 | Amplificatorul de instrumentație | [CCM_L06_Amplificator_Instrumentatie_v1.0.html](https://argatuflorin.github.io/CCM/L06/CCM_L06_Amplificator_Instrumentatie_v1.0.html) |
 
 ## Convenția de denumire
 
-`CCM_<Tip><nr>_<Titlu_Scurt>.html`, unde tipul este **L** (laborator), **A** (aplicație), **C** (curs) sau **P** (proiect). Structura este aceeași în toate disciplinele, iar fișierele din acest repository au exact aceleași nume ca în Google Drive.
+`CCM_L0x_Tema_vX.Y.html`, în folderul `L0x/`. Aplicația poartă codul laboratorului ei; fișierele au exact aceleași nume ca în Google Drive și Moodle. Adresele vechi din rădăcină (A01–A03, L01, L05, L06 fără versiune) redirecționează automat către noile adrese.
 
 ## Utilizare
 
