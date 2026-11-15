@@ -17,6 +17,7 @@ Aplicații interactive (HTML, fără instalare) pentru studiul senzorilor și al
 | L04 | Pt100 — lege R(T) și măsurare | [CCM_L04_Pt100_v1.0.html](https://argatuflorin.github.io/CCM/L04/CCM_L04_Pt100_v1.0.html) |
 | L05 | Puntea Wheatstone pentru senzori rezistivi | [CCM_L05_Puntea_Wheatstone_v2.0.html](https://argatuflorin.github.io/CCM/L05/CCM_L05_Puntea_Wheatstone_v2.0.html) |
 | L06 | Amplificatorul de instrumentație | [CCM_L06_Amplificator_Instrumentatie_v1.0.html](https://argatuflorin.github.io/CCM/L06/CCM_L06_Amplificator_Instrumentatie_v1.0.html) |
+| C05 | Curs: Filtrele analogice (lecție interactivă) | [CCM_C05_Filtre_Analogice_v1.0.html](https://argatuflorin.github.io/CCM/C05/CCM_C05_Filtre_Analogice_v1.0.html) |
 
 ## Convenția de denumire
 
