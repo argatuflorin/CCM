@@ -16,12 +16,14 @@ Aplicații interactive (HTML, fără instalare) pentru studiul senzorilor și al
 | L03 | Termocuplul | [CCM_L03_Termocuplu_v1.0.html](https://argatuflorin.github.io/CCM/L03/CCM_L03_Termocuplu_v1.0.html) |
 | L04 | Pt100 — lege R(T) și măsurare | [CCM_L04_Pt100_v1.0.html](https://argatuflorin.github.io/CCM/L04/CCM_L04_Pt100_v1.0.html) |
 | L05 | Puntea Wheatstone pentru senzori rezistivi | [CCM_L05_Puntea_Wheatstone_v2.0.html](https://argatuflorin.github.io/CCM/L05/CCM_L05_Puntea_Wheatstone_v2.0.html) |
-| L06 | Amplificatorul de instrumentație | [CCM_L06_Amplificator_Instrumentatie_v1.0.html](https://argatuflorin.github.io/CCM/L06/CCM_L06_Amplificator_Instrumentatie_v1.0.html) |
+| L06 | Amplificatorul de instrumentație | [CCM_L06_Amplificator_Instrumentatie_v1.1.html](https://argatuflorin.github.io/CCM/L06/CCM_L06_Amplificator_Instrumentatie_v1.1.html) |
+| L07 | Filtrul anti-aliasing | [CCM_L07_Filtru_Anti_Aliasing_v1.0.html](https://argatuflorin.github.io/CCM/L07/CCM_L07_Filtru_Anti_Aliasing_v1.0.html) |
+| L08 | Filtrul universal cu variabile de stare | [CCM_L08_Filtru_Universal_v1.0.html](https://argatuflorin.github.io/CCM/L08/CCM_L08_Filtru_Universal_v1.0.html) |
 | C05 | Curs: Filtrele analogice (lecție interactivă) | [CCM_C05_Filtre_Analogice_v1.0.html](https://argatuflorin.github.io/CCM/C05/CCM_C05_Filtre_Analogice_v1.0.html) |
 
 ## Convenția de denumire
 
-`CCM_L0x_Tema_vX.Y.html`, în folderul `L0x/`. Aplicația poartă codul laboratorului ei; fișierele au exact aceleași nume ca în Google Drive și Moodle. Adresele vechi din rădăcină (A01–A03, L01, L05, L06 fără versiune) redirecționează automat către noile adrese.
+`CCM_L0x_Tema_vX.Y.html`, în folderul `L0x/`. Aplicația poartă codul laboratorului ei; fișierele au exact aceleași nume ca în Google Drive și Moodle. Adresele vechi din rădăcină (A01–A03, L01, L05, L06 fără versiune) redirecționează automat către noile adrese. L06 v1.0 rămâne disponibil la adresa sa; versiunea curentă este v1.1.
 
 ## Utilizare
 
