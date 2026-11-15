@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CCM L08 – Filtrul universal cu variabile de stare</title>
+<style>
+:root{--bg:#f3f5f3;--paper:#fff;--ink:#121b19;--green:#17634e;--border:#c7d1ca;--wire:#8a948f;--live:#E24B4A;--off:#c9cfcb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.52 system-ui,Arial}
+main{max-width:1230px;margin:auto;padding:25px}
+header{margin-bottom:20px}
+h1{font-size:clamp(27px,4vw,39px);line-height:1.15;margin:8px 0}
+h2{font-size:22px;margin:0 0 12px}
+p{margin:9px 0}
+.eyebrow{color:var(--green);font-size:13px;font-weight:800;letter-spacing:.08em}
+.card{background:var(--paper);border:1px solid var(--border);padding:20px;border-radius:13px;margin-bottom:16px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fields label{display:block;font-weight:650;font-size:13px}
+.fields input,.fields select{display:block;width:100%;margin-top:4px;font:inherit;color:inherit;border:1px solid #8d9b93;border-radius:5px;padding:7px;background:white}
+button{background:#e1eee6;border:1px solid #83a592;padding:9px 12px;border-radius:7px;color:#11241a;font:inherit;font-weight:650;cursor:pointer;margin:6px 5px 5px 0}
+button:hover{background:#cce1d2}
+.note{background:#eef4ef;border-left:4px solid var(--green);padding:12px;margin:12px 0}
+.error{color:#a01616;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0}
+.stat{background:#f8faf8;border:1px solid #dae2dd;padding:11px;border-radius:9px}
+.stat span{display:block;font-size:12px}.stat b{font-size:17px}
+.formula{background:#f7f8f6;padding:12px;text-align:center;font:19px Cambria,Georgia,serif;overflow:auto;margin:12px 0}
+.scroll{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid #c7d1ca;padding:7px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#eaf2eb}
+svg{max-width:100%;height:auto}
+svg text{font-family:system-ui,Arial}
+canvas{width:100%;border:1px solid var(--border);background:white;display:block}
+.muted{color:#475951;font-size:14px}
+.w{stroke:var(--wire);stroke-width:3;fill:none;transition:stroke .3s}
+.w.on{stroke:var(--live);stroke-dasharray:10 6;animation:flow .8s linear infinite}
+.w.cut{stroke:#c62828;stroke-dasharray:3 6}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.w.on{animation:none}}
+.comp rect,.comp path.body{fill:#fff;stroke:#2c4036;stroke-width:1.6;transition:fill .3s}
+.comp.act rect,.comp.act path.body{fill:#C0DD97}
+.comp.sat rect,.comp.sat path.body{fill:#FAC775}
+.comp.bad rect,.comp.bad path.body{fill:#FCEBEB;stroke:#c62828;stroke-dasharray:5 4}
+.tap{fill:#c9cfcb;stroke:#2c4036;stroke-width:1.2}.tap.sel{fill:#16a34a}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:10px}
+.ctl button{width:100%;text-align:left;margin:0;background:#fff}
+.ctl button b{float:right}
+.ctl button.alarm{background:#FCEBEB;border-color:#d99}
+.ctl button.chosen{background:#C0DD97;border-color:#6a9a3a}
+#banner{font-weight:700;padding:10px 12px;border-radius:8px;margin:0 0 10px}
+#log{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;height:190px;overflow:auto;white-space:pre-wrap;margin:0;background:#f8faf8;border:1px solid #dae2dd;border-radius:8px;padding:8px}
+@media(max-width:850px){main{padding:12px}.cols{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media print{body{background:white}main{max-width:none;padding:0}.noPrint,button,canvas,#log{display:none!important}.card{break-inside:avoid;border:1px solid #888}.cols{display:block}table{font-size:10px}.w.on{animation:none}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="eyebrow">CCM · ANUL IV · L08 · SIMULATOR v1.0</div>
+<h1>Filtrul universal cu variabile de stare</h1>
+<p>Un singur circuit, trei ieșiri simultane: <b>trece-sus (FTS)</b>, <b>trece-bandă (FTB)</b> și <b>trece-jos (FTJ)</b>. Alegi ieșirea din comutator, reglezi f<sub>0</sub> și Q și vezi pe viu cum se extrage tonul de măsurare din brum și zgomot. Urmează după L07 (filtrul anti-aliasing).</p>
+</header>
+
+<section class="card" id="fisa">
+<h2>1. Fișa individuală</h2>
+<div class="fields noPrint">
+<label>Grupa<select id="grupa"><option>141ID</option><option>142ID</option></select></label>
+<label>Indicele N<input id="n" type="number" min="1" max="30" step="1" value="7"></label>
+</div>
+<button id="apply">Aplică varianta N</button><button onclick="window.print()">Tipărește fișa</button>
+<div id="variant" class="note"></div>
+<p class="muted">Reguli de generare: tonul de măsurare (de exemplu, excitația alternativă a unui senzor) f<sub>0</sub> = 400 + 40·N Hz; factorul de calitate cerut Q = 3 + (N mod 4). Semnalul de intrare conține tonul (1 V), brum de 50 Hz (1 V) și o perturbație la 5·f<sub>0</sub> (0,5 V). Condensatoarele integratoarelor sunt C = 10 nF.</p>
+</section>
+
+<section class="card">
+<h2>2. Schema animată</h2>
+<div id="banner"></div>
+<svg id="sch" viewBox="0 0 1000 360" role="img" aria-label="Filtru cu variabile de stare: sumatorul AO1 primește intrarea și reacțiile de la ieșirile trece-jos și trece-bandă și dă ieșirea trece-sus; două integratoare AO2 și AO3 dau ieșirile trece-bandă și trece-jos; un comutator alege ieșirea.">
+<rect x="10" y="150" width="95" height="50" rx="8" fill="#eaf2eb" stroke="#2c4036" stroke-width="1.4"/>
+<text x="57" y="172" text-anchor="middle" font-size="14" font-weight="700">Intrare</text>
+<text id="tIn" x="57" y="190" text-anchor="middle" font-size="11" fill="#475951">semnal compus</text>
+<line id="wIn" class="w" x1="105" y1="175" x2="170" y2="175"/>
+<!-- AO1 sumator -->
+<g id="cA1" class="comp"><path class="body" d="M170 130 V220 L260 175 Z"/><text x="180" y="180" font-size="12">Σ AO1</text></g>
+<text x="170" y="240" font-size="11" fill="#475951">sumator</text>
+<line id="wHP" class="w" x1="260" y1="175" x2="340" y2="175"/>
+<circle cx="300" cy="175" r="5" fill="#2c4036"/><text x="266" y="166" font-size="13" font-weight="700">FTS</text>
+<!-- AO2 integrator -->
+<g id="cA2" class="comp"><path class="body" d="M340 130 V220 L430 175 Z"/><text x="352" y="180" font-size="12">∫ AO2</text></g>
+<g id="cC1" class="comp"><rect x="350" y="96" width="70" height="22" rx="3"/><text x="385" y="112" text-anchor="middle" font-size="12">R·C1</text></g>
+<line id="wBP" class="w" x1="430" y1="175" x2="520" y2="175"/>
+<circle cx="475" cy="175" r="5" fill="#2c4036"/><text x="438" y="166" font-size="13" font-weight="700">FTB</text>
+<!-- AO3 integrator -->
+<g id="cA3" class="comp"><path class="body" d="M520 130 V220 L610 175 Z"/><text x="532" y="180" font-size="12">∫ AO3</text></g>
+<g id="cC2" class="comp"><rect x="530" y="96" width="70" height="22" rx="3"/><text x="565" y="112" text-anchor="middle" font-size="12">R·C2</text></g>
+<line id="wLP" class="w" x1="610" y1="175" x2="680" y2="175"/>
+<circle cx="650" cy="175" r="5" fill="#2c4036"/><text x="614" y="166" font-size="13" font-weight="700">FTJ</text>
+<!-- reacții -->
+<path id="fLP" class="w" d="M650 175 V300 H200 V205"/>
+<text x="380" y="318" font-size="12" fill="#475951">reacție FTJ (fixează f0 împreună cu integratoarele)</text>
+<path id="fBP" class="w" d="M475 175 V260 H350"/>
+<g id="cQ" class="comp"><rect x="290" y="248" width="60" height="24" rx="3"/><text x="320" y="265" text-anchor="middle" font-size="12">Q</text></g>
+<path id="fBP2" class="w" d="M290 260 H215 V200"/>
+<text x="230" y="290" font-size="12" fill="#475951">rețea de amortizare</text>
+<!-- comutator ieșire -->
+<path id="oHP" class="w" d="M300 175 V60 H780"/>
+<path id="oBP" class="w" d="M475 175 V80 H780"/>
+<path id="oLP" class="w" d="M680 175 V100 H780"/>
+<circle id="tHP" class="tap" cx="785" cy="60" r="7"/><circle id="tBP" class="tap" cx="785" cy="80" r="7"/><circle id="tLP" class="tap" cx="785" cy="100" r="7"/>
+<text x="800" y="64" font-size="12">FTS</text><text x="800" y="84" font-size="12">FTB</text><text x="800" y="104" font-size="12">FTJ</text>
+<circle cx="850" cy="150" r="5" fill="#2c4036"/>
+<line id="blade" x1="850" y1="150" x2="790" y2="82" stroke="#2c4036" stroke-width="3" stroke-linecap="round"/>
+<text x="862" y="154" font-size="12" fill="#475951">comutator</text>
+<line id="wOut" class="w" x1="850" y1="150" x2="850" y2="200"/>
+<rect x="800" y="200" width="150" height="60" rx="8" fill="#ecfdf5" stroke="#15803d" stroke-width="1.5"/>
+<text x="875" y="225" text-anchor="middle" font-size="14" font-weight="700" fill="#14532d">Ieșire</text>
+<text id="tOut" x="875" y="245" text-anchor="middle" font-size="12" fill="#166534">FTB</text>
+<text id="tF0" x="20" y="350" font-size="13" fill="#17634e" font-weight="700"></text>
+</svg>
+<div class="ctl noPrint">
+<button id="sHP">Ieșire FTS <b></b></button>
+<button id="sBP">Ieșire FTB <b></b></button>
+<button id="sLP">Ieșire FTJ <b></b></button>
+<button id="bMode">Intrare <b></b></button>
+<button id="bC1">Condensator C1 <b></b></button>
+<button id="bQ">Rețea de amortizare <b></b></button>
+</div>
+<p class="muted">Fire roșii animate = poartă semnal; AO verde = lucrează liniar; AO portocaliu = în saturație; componentă roșie întreruptă = defect. Comutatorul arată ieșirea aleasă.</p>
+</section>
+
+<div class="cols">
+<section class="card">
+<h2>3. Ecuațiile filtrului</h2>
+<div class="formula">D(s) = s² + s·ω<sub>1</sub>/Q<sub>d</sub> + ω<sub>1</sub>ω<sub>2</sub>, &nbsp; ω<sub>i</sub> = 1/(R·C<sub>i</sub>)</div>
+<div class="formula">H<sub>FTS</sub> = s²/D &nbsp;·&nbsp; H<sub>FTB</sub> = ω<sub>1</sub>s/D &nbsp;·&nbsp; H<sub>FTJ</sub> = ω<sub>1</sub>ω<sub>2</sub>/D</div>
+<div class="formula">f<sub>0</sub> = √(ω<sub>1</sub>ω<sub>2</sub>)/(2π) = 1/(2πRC) pentru C1 = C2 = C &nbsp;·&nbsp; Q = Q<sub>d</sub>·√(ω<sub>2</sub>/ω<sub>1</sub>)</div>
+<p class="muted">Model normalizat: inversările de semn ale AO sunt omise, iar Q<sub>d</sub> este factorul fixat de rețeaua de amortizare a sumatorului. La f<sub>0</sub>, câștigul ieșirii FTB este Q. AO ideale cu saturație la ±12 V.</p>
+</section>
+<section class="card">
+<h2>4. Parametri de proiectare</h2>
+<div class="fields">
+<label>R (kΩ)<input id="R" type="number" min="0.1" max="1000" step="0.01" value="36.17"></label>
+<label>C (nF)<input id="C" type="number" min="0.1" max="1000" step="0.1" value="10"></label>
+<label>Q<sub>d</sub> (rețeaua de amortizare)<input id="Qd" type="number" min="0.3" max="50" step="0.1" value="6"></label>
+<label>Amplitudine treaptă (V)<input id="Ustep" type="number" min="0.1" max="5" step="0.1" value="1"></label>
+</div>
+<button id="calcR">Calculează R pentru f<sub>0</sub> cerut</button>
+<button id="record">Adaugă punctul curent</button>
+<label class="noPrint"><input id="mask" type="checkbox"> Ascunde rezultatele până calculez singur</label>
+<div id="error" class="error" role="alert"></div>
+<p class="muted">Cerințe: (C1) f<sub>0</sub> realizat în ±2 % din cel cerut; (C2) Q în ±5 % din cel cerut; (C3) pe ieșirea FTB, brumul de 50 Hz și perturbația de 5·f<sub>0</sub> sunt cu cel puțin 20 dB sub ton.</p>
+</section>
+</div>
+
+<section class="card">
+<h2>5. Rezultate și diagrama Bode</h2>
+<div class="stats" id="stats"></div>
+<canvas id="bode" width="1180" height="380"></canvas>
+<p class="muted">Albastru = FTS, verde = FTB, portocaliu = FTJ; ieșirea aleasă este desenată îngroșat. Verticale: 50 Hz, f<sub>0</sub> cerut, 5·f<sub>0</sub>.</p>
+</section>
+
+<section class="card">
+<h2>6. Osciloscop și jurnal</h2>
+<canvas id="sc" width="1180" height="300"></canvas>
+<p class="muted">Gri = intrarea, verde = ieșirea aleasă (fereastră de 20 ms; în modul treaptă, treapta apare la 1 ms). Spotul baleiază ca pe un osciloscop real.</p>
+<pre id="log" aria-live="polite"></pre>
+</section>
+
+<section class="card">
+<h2>7. Experimente ghidate</h2>
+<ol>
+<li><b>E1 – Proiectare:</b> pentru C = 10 nF calculează R pentru f<sub>0</sub> cerut și alege Q<sub>d</sub> pentru Q cerut. Verifică cu banda de stare.</li>
+<li><b>E2 – Trei ieșiri, un circuit:</b> comută pe rând FTS, FTB, FTJ cu semnalul compus. Descrie ce rămâne din ton, din brum și din perturbație pe fiecare ieșire.</li>
+<li><b>E3 – Influența lui Q:</b> la treaptă, pe FTJ, măsoară supracreșterea pentru Q<sub>d</sub> = 0,5; 0,707; 2; 5. Adaugă punctele în tabel și explică legătura dintre vârful din Bode și oscilația amortizată.</li>
+<li><b>E4 – Defect C1:</b> pune C1 la valoare dublă. Calculează noul f<sub>0</sub> și noul Q, apoi compară cu simulatorul.</li>
+<li><b>E5 – Bucla de amortizare întreruptă:</b> deschide rețeaua de amortizare. Ce devine circuitul? De ce AO intră în saturație?</li>
+</ol>
+<p>Capturi solicitate: C1 – ieșirea FTB cu tonul extras; C2 – treapta pe FTJ la Q mare; C3 – circuitul cu bucla de amortizare întreruptă.</p>
+</section>
+
+<section class="card">
+<h2>8. Tabel individual și export CSV</h2>
+<div class="scroll"><table><thead><tr><th>Variantă</th><th>Ieșire</th><th>Intrare</th><th>Stare</th><th>R (kΩ)</th><th>C (nF)</th><th>Qd</th><th>f0 (Hz)</th><th>Q</th><th>Brum (dB rel.)</th><th>5f0 (dB rel.)</th><th>Supracreștere (%)</th><th>Cerințe</th></tr></thead><tbody id="records"></tbody></table></div>
+<button id="csv">Export CSV</button><button id="clear">Golește tabelul</button><button onclick="window.print()">Imprimare</button>
+<p class="muted">Rezultate calculate local, pe model ideal; nu sunt măsurători fizice.</p>
+</section>
+
+<section class="card">
+<h2>9. Întrebări pentru verificare</h2>
+<ol>
+<li>De ce acest circuit se numește „cu variabile de stare”? Care sunt variabilele de stare?</li>
+<li>Cum se obțin simultan cele trei ieșiri dintr-o singură buclă?</li>
+<li>De ce f<sub>0</sub> și Q se pot regla independent în această topologie?</li>
+<li>Ce legătură există între Q, lățimea de bandă și supracreșterea la treaptă?</li>
+<li>Care ieșire este potrivită pentru extragerea unui ton de măsurare și de ce?</li>
+<li>Ce se întâmplă cu f<sub>0</sub> și Q dacă un singur condensator își schimbă valoarea?</li>
+<li>De ce întreruperea rețelei de amortizare transformă filtrul în oscilator?</li>
+<li>Unde ar fi util un FTS în lanțul de măsurare al unui senzor?</li>
+</ol>
+<p class="muted">Referințe: [1] Texas Instruments, „Active Low-Pass Filter Design”, SLOA049, https://www.ti.com/lit/an/sloa049b/sloa049b.pdf ; [2] Analog Devices, MT-222 „State Variable Filters”, https://www.analog.com/media/en/training-seminars/tutorials/MT-222.pdf ; [3] CCM L07, „Filtrul anti-aliasing”, ARGATU HUB. Simulare didactică pe model normalizat.</p>
+</section>
+<footer class="muted">Material didactic · Conf. dr. ing. Florin Argatu · DMAECS, UPB · CCM L08 v1.0 · 15.11.2026</footer>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),num=id=>Number($(id).value);
+const fmt=(x,d=3)=>Number.isFinite(x)?x.toFixed(d):'—',dB=x=>20*Math.log10(Math.max(x,1e-12));
+const VSAT=12,TW=0.02,NAMES={HP:'FTS',BP:'FTB',LP:'FTJ'};
+let V=null,rows=[],t0=performance.now(),A=null,TR=null;
+const S={out:'BP',step:false,c1x:false,qcut:false};
+function log(m){const t=((performance.now()-t0)/1000).toFixed(1).padStart(6);$('log').textContent=`[${t} s] ${m}\n`+$('log').textContent}
+function code(){return `CCM-L08-${V.g}-N${String(V.n).padStart(2,'0')}-v1.0`}
+function apply(){const n=num('n'),g=$('grupa').value;if(!Number.isInteger(n)||n<1||n>(g==='141ID'?30:29)){alert('N invalid pentru grupa selectată.');return}
+V={n,g,f0:400+40*n,Q:3+n%4};rows=[];drawRows();
+$('variant').innerHTML=`<b>${code()}</b> · f<sub>0</sub> cerut = ${V.f0} Hz · Q cerut = ${V.Q} · lățime de bandă B = f<sub>0</sub>/Q = ${fmt(V.f0/V.Q,1)} Hz · perturbație la 5·f<sub>0</sub> = ${5*V.f0} Hz · C = 10 nF`;
+log(`Varianta ${code()} aplicată`);recalc()}
+function params(){const R=num('R')*1e3,C=num('C')*1e-9,Qd=num('Qd'),Us=num('Ustep');
+if(![R,C,Qd,Us].every(x=>Number.isFinite(x)&&x>0))throw Error('R, C, Qd și amplitudinea treptei trebuie să fie pozitive.');
+const C1=S.c1x?2*C:C,C2=C;return{R,C,C1,C2,w1:1/(R*C1),w2:1/(R*C2),Qd:S.qcut?Infinity:Qd,Us}}
+function Hs(f,p,k){const w=2*Math.PI*f,re=p.w1*p.w2-w*w,im=w*p.w1/p.Qd,d=Math.hypot(re,im);
+return k==='HP'?w*w/d:k==='BP'?p.w1*w/d:p.w1*p.w2/d}
+function analyse(){const p=params(),f0=Math.sqrt(p.w1*p.w2)/(2*Math.PI),Q=p.Qd*Math.sqrt(p.w2/p.w1),k=S.out;
+const g0=Hs(V.f0,p,k),gh=Hs(50,p,k),gp=Hs(5*V.f0,p,k),relH=dB(gh/g0),relP=dB(gp/g0);
+const ok1=Math.abs(f0/V.f0-1)<=0.02,ok2=Number.isFinite(Q)&&Math.abs(Q/V.Q-1)<=0.05,bp0=Hs(V.f0,p,'BP'),ok3=dB(Hs(50,p,'BP')/bp0)<=-20&&dB(Hs(5*V.f0,p,'BP')/bp0)<=-20;
+return{p,f0,Q,g0,relH,relP,ok1,ok2,ok3}}
+function vin(t,p){if(S.step)return t>=0.001?p.Us:0;return Math.sin(2*Math.PI*V.f0*t)+Math.sin(2*Math.PI*50*t+0.4)+0.5*Math.sin(2*Math.PI*5*V.f0*t+1.1)}
+function simulate(p){const fmax=Math.max(V.f0*5,1/(2*Math.PI*p.R*p.C2)),dt=1/(fmax*200);
+const clamp=x=>Math.max(-VSAT,Math.min(VSAT,x));let bp=0,lp=S.qcut?0.01:0,hp=0,sat=false;
+const warm=S.step?0:0.06,Nw=Math.ceil(warm/dt),N=Math.ceil(TW/dt),every=Math.max(1,Math.floor(N/1600));
+for(let i=0;i<Nw;i++){const t=-warm+i*dt;hp=clamp(vin(t,p)-lp-(Number.isFinite(p.Qd)?bp/p.Qd:0));bp=clamp(bp+p.w1*hp*dt);lp=clamp(lp+p.w2*bp*dt)}
+const out={t:[],x:[],HP:[],BP:[],LP:[]};let mx=0;
+for(let i=0;i<=N;i++){const t=i*dt,x=vin(t,p);hp=clamp(x-lp-(Number.isFinite(p.Qd)?bp/p.Qd:0));bp=clamp(bp+p.w1*hp*dt);lp=clamp(lp+p.w2*bp*dt);
+if(Math.abs(hp)>=VSAT-1e-9||Math.abs(bp)>=VSAT-1e-9||Math.abs(lp)>=VSAT-1e-9)sat=true;
+if(i%every===0){out.t.push(t);out.x.push(x);out.HP.push(hp);out.BP.push(bp);out.LP.push(lp)}}
+out.sat=sat;if(S.step){const fin=p.Us,m=Math.max(...out.LP);out.os=Math.max(0,(m/fin-1)*100)}else out.os=NaN;return out}
+function recalc(){if(!V)return;try{$('error').textContent='';A=analyse();TR=simulate(A.p);
+const st=[['f0 realizat',fmt(A.f0,1)+' Hz'],['Q realizat',Number.isFinite(A.Q)?fmt(A.Q,3):'∞'],['B = f0/Q',Number.isFinite(A.Q)?fmt(A.f0/A.Q,1)+' Hz':'0'],['Câștig la f0 ('+NAMES[S.out]+')',fmt(dB(A.g0),1)+' dB'],['Brum față de ton',fmt(A.relH,1)+' dB'],['5·f0 față de ton',fmt(A.relP,1)+' dB'],['Supracreștere FTJ',S.step?fmt(TR.os,1)+' %':'(mod treaptă)'],['Cerințe C1/C2/C3',[A.ok1,A.ok2,A.ok3].map(x=>x?'✓':'✗').join(' ')]];
+$('stats').innerHTML=st.map(x=>`<div class="stat"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');$('stats').style.visibility=$('mask').checked?'hidden':'visible';
+$('tF0').textContent=`f0 = ${fmt(A.f0,1)} Hz · Q = ${Number.isFinite(A.Q)?fmt(A.Q,2):'∞'}`;ui();bode()}catch(e){$('error').textContent=e.message}}
+function ui(){const on=(id,v)=>{$(id).classList.toggle('on',!!v)},cp=(id,act,bad,sat)=>{const e=$(id);e.classList.toggle('act',!!act&&!sat);e.classList.toggle('bad',!!bad);e.classList.toggle('sat',!!sat)};
+['wIn','wHP','wBP','wLP','fLP'].forEach(i=>on(i,1));on('fBP',!S.qcut);on('fBP2',!S.qcut);$('fBP').classList.toggle('cut',S.qcut);$('fBP2').classList.toggle('cut',S.qcut);
+['HP','BP','LP'].forEach(k=>{on('o'+k,S.out===k);$('t'+k).classList.toggle('sel',S.out===k)});on('wOut',1);
+const yy={HP:60,BP:80,LP:100};$('blade').setAttribute('y2',yy[S.out]+2);
+cp('cA1',1,false,TR.sat);cp('cA2',1,false,TR.sat);cp('cA3',1,false,TR.sat);cp('cC1',!S.c1x,S.c1x);cp('cC2',1,false);cp('cQ',!S.qcut,S.qcut);
+$('tOut').textContent=NAMES[S.out];$('tIn').textContent=S.step?'treaptă '+num('Ustep')+' V':'semnal compus';
+const b=$('banner');let t,bg,c;
+if(TR.sat){t=S.qcut?'OSCILEAZĂ! Fără amortizare, bucla devine oscilator; amplitudinea crește până la saturația AO (±12 V).':'AO în saturație (±12 V): câștigul la f0 este prea mare pentru semnalul aplicat.';bg='#FCEBEB';c='#791F1F'}
+else if(S.step){t=`Răspuns la treaptă: supracreștere FTJ ${fmt(TR.os,1)} %, Q = ${fmt(A.Q,2)}. Q mare = vârf în Bode = oscilație amortizată lungă.`;bg='#EEF4EF';c='#17634e'}
+else if(S.out!=='BP'){t=`Ieșirea ${NAMES[S.out]} nu extrage tonul: brumul este la ${fmt(A.relH,1)} dB și perturbația la ${fmt(A.relP,1)} dB față de ton.`;bg='#FAEEDA';c='#633806'}
+else if(A.ok1&&A.ok2&&A.ok3){t='Tonul de măsurare este extras corect pe FTB: f0 și Q în toleranță, brumul și perturbația sub −20 dB.';bg='#EAF3DE';c='#27500A'}
+else{t=`FTB activ, dar proiectul nu respectă cerințele (C1 ${A.ok1?'✓':'✗'} · C2 ${A.ok2?'✓':'✗'} · C3 ${A.ok3?'✓':'✗'}).`;bg='#FAEEDA';c='#633806'}
+b.textContent=t;b.style.background=bg;b.style.color=c;
+const set=(id,txt,al,ch)=>{$(id).querySelector('b').textContent=txt;$(id).classList.toggle('alarm',!!al);$(id).classList.toggle('chosen',!!ch)};
+['HP','BP','LP'].forEach(k=>set('s'+k,S.out===k?'ALES':'',false,S.out===k));set('bMode',S.step?'TREAPTĂ':'COMPUS');set('bC1',S.c1x?'×2 (DEFECT)':'OK',S.c1x);set('bQ',S.qcut?'ÎNTRERUPTĂ':'OK',S.qcut)}
+function bode(){const cv=$('bode'),c=cv.getContext('2d'),W=cv.width,Hh=cv.height,L=70,R=W-25,T=30,B=Hh-45,f0=10,f1=100000,ymin=-80,ymax=40;
+const xx=f=>L+(R-L)*Math.log10(f/f0)/Math.log10(f1/f0),yy=y=>T+(B-T)*(ymax-Math.max(ymin,Math.min(ymax,y)))/(ymax-ymin);
+c.clearRect(0,0,W,Hh);c.fillStyle='#fff';c.fillRect(0,0,W,Hh);c.strokeStyle='#e3e9e5';c.fillStyle='#111';c.font='14px system-ui';
+for(let y=ymin;y<=ymax;y+=20){c.beginPath();c.moveTo(L,yy(y));c.lineTo(R,yy(y));c.stroke();c.fillText(y,25,yy(y)+5)}
+for(let e=1;e<=5;e++){const f=10**e;c.beginPath();c.moveTo(xx(f),T);c.lineTo(xx(f),B);c.stroke();c.fillText(f>=1000?f/1000+'k':f,xx(f)-10,B+20)}
+c.fillText('f (Hz)',R-50,Hh-8);c.fillText('dB',25,20);
+const vl=(f,col,lab)=>{c.strokeStyle=col;c.setLineDash([5,4]);c.beginPath();c.moveTo(xx(f),T);c.lineTo(xx(f),B);c.stroke();c.setLineDash([]);c.fillStyle=col;c.fillText(lab,xx(f)+4,T+14)};
+vl(50,'#b96c0c','50 Hz');vl(V.f0,'#17634e','f0 cerut');vl(5*V.f0,'#c62828','5·f0');
+[['HP','#1d4ed8'],['BP','#17634e'],['LP','#d97706']].forEach(([k,col])=>{c.beginPath();for(let i=0;i<=500;i++){const f=f0*(f1/f0)**(i/500),y=dB(Hs(f,A.p,k));i?c.lineTo(xx(f),yy(y)):c.moveTo(xx(f),yy(y))}c.strokeStyle=col;c.lineWidth=S.out===k?4:1.5;c.stroke()});c.lineWidth=1;
+c.font='13px system-ui';c.fillStyle='#1d4ed8';c.fillText('FTS',R-140,T+34);c.fillStyle='#17634e';c.fillText('FTB',R-100,T+34);c.fillStyle='#d97706';c.fillText('FTJ',R-60,T+34)}
+function draw(now){if(TR){const cv=$('sc'),c=cv.getContext('2d'),W=cv.width,Hh=cv.height,L=60,R=W-15,T=26,B=Hh-22;
+const sig=TR[S.out],m=Math.max(1.6,...TR.x.map(Math.abs),...sig.map(Math.abs))*1.08,yy=v=>(T+B)/2-(B-T)/2*v/m;
+c.clearRect(0,0,W,Hh);c.fillStyle='#fff';c.fillRect(0,0,W,Hh);c.strokeStyle='#e3e9e5';c.fillStyle='#111';c.font='13px system-ui';
+for(let j=-2;j<=2;j++){const v=m*j/2;c.beginPath();c.moveTo(L,yy(v));c.lineTo(R,yy(v));c.stroke();c.fillText(v.toFixed(1),8,yy(v)+4)}
+c.fillText(`20 ms · gri = intrare · verde = ieșirea ${NAMES[S.out]}`,L+4,16);
+const n=TR.t.length,beam=((now-t0)/1000%2.2)/2,xx=i=>L+(R-L)*i/(n-1);
+c.beginPath();for(let i=0;i<n;i++){i?c.lineTo(xx(i),yy(TR.x[i])):c.moveTo(xx(i),yy(TR.x[i]))}c.strokeStyle='#b5bfba';c.lineWidth=1.2;c.stroke();
+c.beginPath();const lim=Math.min(n-1,Math.floor(beam*(n-1)));for(let i=0;i<=lim;i++){i?c.lineTo(xx(i),yy(sig[i])):c.moveTo(xx(i),yy(sig[i]))}c.strokeStyle='#17634e';c.lineWidth=2.4;c.stroke();
+c.beginPath();c.arc(xx(lim),yy(sig[lim]),5,0,7);c.fillStyle='#16a34a';c.fill();
+if(TR.sat){c.strokeStyle='#c62828';c.setLineDash([8,6]);[VSAT,-VSAT].forEach(v=>{if(Math.abs(v)<=m){c.beginPath();c.moveTo(L,yy(v));c.lineTo(R,yy(v));c.stroke()}});c.setLineDash([])}}
+requestAnimationFrame(draw)}
+function add(){if(!A)return;rows.push({code:code(),out:NAMES[S.out],mode:S.step?'treapta':'compus',st:[S.c1x?'C1x2':'',S.qcut?'amortizare intrerupta':''].filter(Boolean).join(', ')||'normal',R:num('R'),C:num('C'),Qd:S.qcut?Infinity:num('Qd'),f0:A.f0,Q:A.Q,rh:A.relH,rp:A.relP,os:TR.os,ok:[A.ok1,A.ok2,A.ok3].map(x=>x?'DA':'NU').join('/')});drawRows();log('Punct adăugat în tabel')}
+function drawRows(){$('records').innerHTML=rows.map(r=>`<tr><td>${r.code}</td><td>${r.out}</td><td>${r.mode}</td><td>${r.st}</td><td>${fmt(r.R,2)}</td><td>${fmt(r.C,1)}</td><td>${Number.isFinite(r.Qd)?fmt(r.Qd,2):'∞'}</td><td>${fmt(r.f0,1)}</td><td>${Number.isFinite(r.Q)?fmt(r.Q,3):'∞'}</td><td>${fmt(r.rh,1)}</td><td>${fmt(r.rp,1)}</td><td>${fmt(r.os,1)}</td><td>${r.ok}</td></tr>`).join('')}
+function csv(){const d=[['Cod varianta','Versiune','Iesire','Intrare','Stare','R (kohm)','C (nF)','Qd','f0 (Hz)','Q','Brum rel (dB)','5f0 rel (dB)','Supracrestere (%)','Cerinte C1/C2/C3'],...rows.map(r=>[r.code,'1.0',r.out,r.mode,r.st,r.R,r.C,r.Qd,r.f0,r.Q,r.rh,r.rp,r.os,r.ok])].map(r=>r.join(';')).join('\r\n');
+const b=new Blob(['﻿'+d],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=`${code()}_rezultate.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function after(m){recalc();if(A)log(m+` → f0 = ${fmt(A.f0,1)} Hz, Q = ${Number.isFinite(A.Q)?fmt(A.Q,2):'∞'}${TR&&TR.sat?' · AO SATURAT':''}${S.step&&TR?' · supracreștere '+fmt(TR.os,1)+' %':''}`)}
+['HP','BP','LP'].forEach(k=>$('s'+k).onclick=()=>{S.out=k;after('Comutator pe '+NAMES[k])});
+$('bMode').onclick=()=>{S.step=!S.step;after(S.step?'Intrare: treaptă':'Intrare: semnal compus (ton + brum + perturbație)')};
+$('bC1').onclick=()=>{S.c1x=!S.c1x;after(S.c1x?'DEFECT: C1 la valoare dublă':'C1 refăcut')};
+$('bQ').onclick=()=>{S.qcut=!S.qcut;after(S.qcut?'DEFECT: rețeaua de amortizare întreruptă':'Rețeaua de amortizare refăcută')};
+$('calcR').onclick=()=>{const C=num('C')*1e-9;if(!(C>0))return;$('R').value=(1/(2*Math.PI*V.f0*C)/1000).toFixed(2);after(`R calculat pentru f0 = ${V.f0} Hz: ${$('R').value} kΩ`)};
+let deb;['R','C','Qd','Ustep','mask'].forEach(id=>$(id).addEventListener('input',()=>{recalc();clearTimeout(deb);deb=setTimeout(()=>{if(A)log(`Parametri: f0 = ${fmt(A.f0,1)} Hz, Q = ${Number.isFinite(A.Q)?fmt(A.Q,2):'∞'}`)},700)}));
+$('apply').onclick=apply;$('record').onclick=add;$('csv').onclick=csv;$('clear').onclick=()=>{rows=[];drawRows()};
+log('Pornire simulator');apply();requestAnimationFrame(draw);
+</script>
+</body></html>
