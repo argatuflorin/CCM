@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calculator Termistor NTC</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#18212a; --muted:#66717d;
+  --accent:#1769aa; --border:#dbe1e6; --ok:#0a7a45;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg); color:var(--text);
+}
+.wrap{max-width:980px;margin:32px auto;padding:0 16px}
+h1{margin:0 0 6px;font-size:30px}
+.sub{color:var(--muted);margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px; box-shadow:0 4px 16px rgba(0,0,0,.05);
+}
+h2{margin-top:0;font-size:19px}
+label{display:block;margin:12px 0 5px;font-weight:600;font-size:14px}
+input,select{
+  width:100%;padding:10px 11px;border:1px solid #cbd3da;border-radius:8px;
+  font-size:15px;background:#fff;color:var(--text)
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{
+  width:100%;margin-top:16px;padding:11px 14px;border:0;border-radius:9px;
+  background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer
+}
+button:hover{filter:brightness(.95)}
+.result{
+  margin-top:16px;padding:14px;border-radius:10px;background:#eef6fc;
+  border-left:4px solid var(--accent);line-height:1.65
+}
+.big{font-size:26px;font-weight:800;color:var(--ok)}
+.small{font-size:13px;color:var(--muted)}
+.formula{
+  margin-top:18px;padding:14px;background:#f8fafb;border:1px solid var(--border);
+  border-radius:10px;font-family:Consolas,monospace;font-size:13px;line-height:1.7
+}
+footer{margin:18px 0 40px;color:var(--muted);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Calculator Termistor NTC</h1>
+  <div class="sub">Ecuația Beta + divizor rezistiv pentru Arduino / ESP32</div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Parametrii termistorului</h2>
+
+      <div class="row">
+        <div>
+          <label>R₀ la T₀ [Ω]</label>
+          <input id="r0" type="number" value="10000" step="1">
+        </div>
+        <div>
+          <label>T₀ [°C]</label>
+          <input id="t0" type="number" value="25" step="0.1">
+        </div>
+      </div>
+
+      <label>Constanta Beta B [K]</label>
+      <input id="beta" type="number" value="3950" step="1">
+
+      <div class="row">
+        <div>
+          <label>Rezistor fix [Ω]</label>
+          <input id="rf" type="number" value="10000" step="1">
+        </div>
+        <div>
+          <label>Vcc [V]</label>
+          <input id="vcc" type="number" value="3.3" step="0.01">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Rezoluție ADC [biți]</label>
+          <input id="bits" type="number" value="12" min="1" max="24">
+        </div>
+        <div>
+          <label>Montaj divizor</label>
+          <select id="topology">
+            <option value="ntc_gnd">Rezistor fix la Vcc, NTC la GND</option>
+            <option value="ntc_vcc">NTC la Vcc, rezistor fix la GND</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>1. Temperatură din rezistență / ADC</h2>
+
+      <label>Mod de intrare</label>
+      <select id="inputMode" onchange="toggleInput()">
+        <option value="res">Rezistență NTC [Ω]</option>
+        <option value="adc">Valoare ADC</option>
+        <option value="volt">Tensiune măsurată [V]</option>
+      </select>
+
+      <div id="resBox">
+        <label>Rezistență NTC [Ω]</label>
+        <input id="rntc" type="number" value="10000" step="1">
+      </div>
+
+      <div id="adcBox" style="display:none">
+        <label>Valoare ADC</label>
+        <input id="adc" type="number" value="2048" step="1">
+      </div>
+
+      <div id="voltBox" style="display:none">
+        <label>Tensiune pe intrarea ADC [V]</label>
+        <input id="vin" type="number" value="1.65" step="0.001">
+      </div>
+
+      <button onclick="calcTemperature()">Calculează temperatura</button>
+      <div class="result" id="tempResult">
+        Rezultat: —
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Rezistență / ADC din temperatură</h2>
+
+      <label>Temperatura dorită [°C]</label>
+      <input id="targetT" type="number" value="50" step="0.1">
+
+      <button onclick="calcFromTemperature()">Calculează</button>
+      <div class="result" id="reverseResult">
+        Rezultat: —
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Formule utilizate</h2>
+      <div class="formula">
+        T[K] = 1 / (1/T₀ + ln(R/R₀)/B)<br>
+        T[°C] = T[K] − 273.15<br><br>
+        R(T) = R₀ · exp[B · (1/T − 1/T₀)]
+      </div>
+      <p class="small">
+        Pentru precizie mai mare pe un domeniu larg de temperatură se poate folosi
+        ecuația Steinhart–Hart, dacă ai coeficienții A, B și C ai termistorului.
+      </p>
+    </section>
+  </div>
+
+  <footer>Calculator educațional pentru termistoare NTC • Arduino / ESP32</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function num(id){
+  return parseFloat($(id).value);
+}
+
+function params(){
+  return {
+    r0:num("r0"),
+    t0:num("t0")+273.15,
+    beta:num("beta"),
+    rf:num("rf"),
+    vcc:num("vcc"),
+    bits:parseInt($("bits").value),
+    topology:$("topology").value
+  };
+}
+
+function adcMax(bits){
+  return Math.pow(2,bits)-1;
+}
+
+function resistanceFromVoltage(v,p){
+  if(v<=0 || v>=p.vcc) return NaN;
+
+  if(p.topology==="ntc_gnd"){
+    // Vout = Vcc * Rntc / (Rf + Rntc)
+    return p.rf * v / (p.vcc-v);
+  } else {
+    // Vout = Vcc * Rf / (Rntc + Rf)
+    return p.rf * (p.vcc-v) / v;
+  }
+}
+
+function voltageFromResistance(r,p){
+  if(p.topology==="ntc_gnd"){
+    return p.vcc * r/(p.rf+r);
+  } else {
+    return p.vcc * p.rf/(p.rf+r);
+  }
+}
+
+function temperatureFromResistance(r,p){
+  const invT = 1/p.t0 + Math.log(r/p.r0)/p.beta;
+  return 1/invT - 273.15;
+}
+
+function resistanceFromTemperature(tc,p){
+  const tk = tc + 273.15;
+  return p.r0 * Math.exp(p.beta*(1/tk - 1/p.t0));
+}
+
+function toggleInput(){
+  const m=$("inputMode").value;
+  $("resBox").style.display=m==="res"?"block":"none";
+  $("adcBox").style.display=m==="adc"?"block":"none";
+  $("voltBox").style.display=m==="volt"?"block":"none";
+}
+
+function calcTemperature(){
+  const p=params();
+  const mode=$("inputMode").value;
+  let r,v,adc;
+
+  if([p.r0,p.t0,p.beta,p.rf,p.vcc].some(x=>!isFinite(x) || x<=0)){
+    $("tempResult").innerHTML="Verifică parametrii introduși.";
+    return;
+  }
+
+  if(mode==="res"){
+    r=num("rntc");
+    v=voltageFromResistance(r,p);
+    adc=v/p.vcc*adcMax(p.bits);
+  } else if(mode==="adc"){
+    adc=num("adc");
+    if(adc<=0 || adc>=adcMax(p.bits)){
+      $("tempResult").innerHTML="ADC trebuie să fie între 1 și "+(adcMax(p.bits)-1)+".";
+      return;
+    }
+    v=adc/adcMax(p.bits)*p.vcc;
+    r=resistanceFromVoltage(v,p);
+  } else {
+    v=num("vin");
+    r=resistanceFromVoltage(v,p);
+    adc=v/p.vcc*adcMax(p.bits);
+  }
+
+  if(!isFinite(r) || r<=0){
+    $("tempResult").innerHTML="Valoare invalidă pentru acest divizor.";
+    return;
+  }
+
+  const t=temperatureFromResistance(r,p);
+
+  $("tempResult").innerHTML =
+    `<div class="big">${t.toFixed(2)} °C</div>
+     R<sub>NTC</sub> = ${r.toFixed(1)} Ω<br>
+     V<sub>ADC</sub> = ${v.toFixed(4)} V<br>
+     ADC ≈ ${adc.toFixed(0)} / ${adcMax(p.bits)}`;
+}
+
+function calcFromTemperature(){
+  const p=params();
+  const tc=num("targetT");
+
+  if(tc<=-273.15){
+    $("reverseResult").innerHTML="Temperatura trebuie să fie peste −273,15 °C.";
+    return;
+  }
+
+  const r=resistanceFromTemperature(tc,p);
+  const v=voltageFromResistance(r,p);
+  const adc=v/p.vcc*adcMax(p.bits);
+
+  $("reverseResult").innerHTML =
+    `<div class="big">${r.toFixed(1)} Ω</div>
+     la ${tc.toFixed(2)} °C<br>
+     V<sub>ADC</sub> = ${v.toFixed(4)} V<br>
+     ADC ≈ ${adc.toFixed(0)} / ${adcMax(p.bits)}`;
+}
+
+calcTemperature();
+calcFromTemperature();
+</script>
+</body>
+</html>
