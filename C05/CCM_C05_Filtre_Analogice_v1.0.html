@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCM_C05_Filtre_Analogice_v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f2a4a; --navy2:#173b66; --ink:#1c2533; --muted:#5b6778; --line:#dfe5ee;
+  --bg:#f4f7fb; --card:#ffffff; --orange:#e07a1f; --teal:#0e9f8e; --purple:#6b4fbb;
+  --red:#d64545; --blue:#2f6fd6; --soft-o:#fff4ea; --soft-t:#e7f7f5; --soft-b:#eaf1fd;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+code,pre,.mono{font-family:"JetBrains Mono",Consolas,monospace}
+header.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#1f5a8a 100%);color:#fff;padding:48px 24px 40px;position:relative;overflow:hidden}
+header.hero svg.wave{position:absolute;right:-40px;bottom:-10px;opacity:.18;width:620px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.kicker{letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:700;color:#ffc58f}
+h1{font-size:44px;line-height:1.1;margin:10px 0 8px;font-weight:800}
+.sub{font-size:19px;opacity:.9;max-width:760px}
+.meta{margin-top:18px;font-size:13px;opacity:.8}
+nav.toc{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 20px}
+nav.toc a{white-space:nowrap;text-decoration:none;color:var(--navy);font-weight:600;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#fff}
+nav.toc a:hover,nav.toc a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+section.sec{padding:34px 0 10px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+.badge{flex:none;width:46px;height:46px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px}
+.sec-head h2{margin:0;font-size:28px;color:var(--navy)}
+.sec-head .min{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600;background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 1px 2px rgba(15,42,74,.04),0 8px 24px rgba(15,42,74,.05);margin-bottom:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid2>*,.grid3>*,.grid4>*{min-width:0}
+@media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr}h1{font-size:32px}}
+.callout{border-left:5px solid var(--orange);background:var(--soft-o);padding:14px 16px;border-radius:10px;margin:12px 0}
+.callout.t{border-color:var(--teal);background:var(--soft-t)}
+.callout.b{border-color:var(--blue);background:var(--soft-b)}
+.callout b{color:var(--navy)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft-b);color:var(--blue);margin-right:6px}
+.mini h4{margin:6px 0 4px;color:var(--navy)}
+.mini p{margin:0;font-size:14px;color:var(--muted)}
+.ctrl{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin:8px 0 14px}
+.ctrl label{font-size:13px;font-weight:600;color:var(--muted);display:block}
+.ctrl label>input,.ctrl label>select{display:block;margin-top:5px}
+.ctrl input[type=range]{width:200px;accent-color:var(--orange)}
+.ctrl select,.ctrl input[type=number]{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;min-width:120px}
+.val{font-family:"JetBrains Mono",monospace;color:var(--navy);font-weight:600}
+canvas.plot{width:100%;height:330px;display:block;border-radius:10px;background:#fbfcfe;border:1px solid var(--line)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{cursor:pointer;border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px}
+.chip.on{color:#fff}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}
+table.t th{background:#f2f5fa;color:var(--navy);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+.res div{background:#f6f8fc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.res small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+.res span{font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:600;color:var(--navy)}
+pre.code{background:#0f1b2d;color:#d8e4f5;padding:14px 16px;border-radius:10px;overflow:auto;font-size:13px;position:relative;margin:8px 0}
+.copy{position:absolute;top:8px;right:8px;background:#26405f;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+.formula{font-family:"JetBrains Mono",monospace;background:#f6f8fc;border:1px dashed #c9d3e2;padding:10px 14px;border-radius:10px;display:inline-block;margin:6px 0;color:var(--navy)}
+.q{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff}
+.q p{margin:0 0 8px;font-weight:600}
+.q button{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:#fafbfd;font:inherit;font-size:14px;cursor:pointer}
+.q button.ok{background:#e5f6ee;border-color:#2e9d68}
+.q button.ko{background:#fdeaea;border-color:var(--red)}
+.q .ex{display:none;font-size:13px;color:var(--muted);margin-top:6px}
+.score{font-weight:700;color:var(--navy)}
+footer{padding:30px 0 50px;color:var(--muted);font-size:13px}
+.src li{margin:4px 0}
+svg text{font-family:Inter,system-ui,sans-serif}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-top:8px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.obj{counter-reset:o;list-style:none;padding:0;margin:0}
+.obj li{counter-increment:o;position:relative;padding:8px 0 8px 44px;border-bottom:1px solid var(--line)}
+.obj li:before{content:counter(o);position:absolute;left:0;top:6px;width:30px;height:30px;border-radius:8px;background:var(--soft-o);color:var(--orange);font-weight:800;display:grid;place-items:center}
+@media print{nav.toc{display:none}.card,.callout,svg,canvas{break-inside:avoid}section.sec{break-before:auto}body{background:#fff}.copy{display:none}header.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="wave" viewBox="0 0 600 200" aria-hidden="true"><path d="M0 100 Q 50 10 100 100 T 200 100 T 300 100 T 400 100 T 500 100 T 600 100" fill="none" stroke="#fff" stroke-width="3"/><path d="M0 120 C 150 120 200 120 260 120 S 330 190 600 195" fill="none" stroke="#ffc58f" stroke-width="5"/></svg>
+  <div class="wrap">
+    <div class="kicker">CCM · Cursul C05 · 2026–2027</div>
+    <h1>Filtrele analogice</h1>
+    <div class="sub">De la ieșirea amplificatorului de instrumentație la ADC-ul ESP32: ce filtrăm, cu ce aproximare și cum dimensionăm efectiv celula.</div>
+    <div class="meta">Concepția asistată de calculator a convertoarelor de măsurare · Conf. dr. ing. Florin Ciprian Argatu · UPB · FIE · DMAECS<br>CCM_C05_Filtre_Analogice_v1.0 · grupele 141ID / 142ID · Capitolul 3 din fișa disciplinei</div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#cuprins">Cuprins</a><a href="#A">A · Problema</a><a href="#B">B · Tipuri și gabarit</a><a href="#C">C · Aproximări</a><a href="#D">D · Sallen-Key</a><a href="#E">E · Antialias ESP32</a><a href="#F">F · În practică</a><a href="#G">G · Recapitulare</a>
+</div></nav>
+
+<main class="wrap">
+
+<!-- CUPRINS -->
+<section class="sec" id="cuprins">
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Traseul de azi</h3>
+      <table class="t">
+        <tr><td><b>A</b></td><td>Problema: zgomot, 50 Hz și aliere înainte de ADC</td><td>10 min</td></tr>
+        <tr><td><b>B</b></td><td>Tipuri de filtre și gabaritul de proiectare</td><td>12 min</td></tr>
+        <tr><td><b>C</b></td><td>Aproximări: Butterworth, Cebîșev, Bessel, Cauer</td><td>22 min</td></tr>
+        <tr><td><b>D</b></td><td>Celula Sallen-Key: dimensionare și simulare SPICE</td><td>25 min</td></tr>
+        <tr><td><b>E</b></td><td>Exemplul complet: filtrul antialias pentru ESP32</td><td>18 min</td></tr>
+        <tr><td><b>F</b></td><td>Unde întâlnim filtrele în practică</td><td>8 min</td></tr>
+        <tr><td><b>G</b></td><td>Recapitulare, test rapid, legătura cu C06</td><td>5 min</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">La finalul cursului puteți…</h3>
+      <ol class="obj">
+        <li>Explicați de ce un ADC are nevoie de un filtru în față (alierea)</li>
+        <li>Citiți un gabarit: f<sub>p</sub>, f<sub>s</sub>, A<sub>max</sub>, A<sub>min</sub></li>
+        <li>Alegeți aproximarea potrivită: amplitudine plată, pantă abruptă sau formă de undă păstrată</li>
+        <li>Dimensionați o celulă Sallen-Key și o verificați în SPICE</li>
+        <li>Calculați ordinul filtrului antialias pentru lanțul Pt100 → AI → ESP32</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- A -->
+<section class="sec" id="A">
+  <div class="sec-head"><div class="badge">A</div><h2>Problema: ce ajunge la ADC în afară de semnal</h2><span class="min">10 min</span></div>
+  <div class="card">
+    <p style="margin-top:0">În C04 am adus semnalul punții cu Pt100 de la câțiva mV la plaja 0–3,3 V a ADC-ului. Amplificatorul de instrumentație amplifică însă <b>tot</b> ce găsește în banda lui: semnalul util (temperatura variază lent, sub 1 Hz), dar și brumul de 50 Hz cuplat pe cabluri și zgomotul de bandă largă. Locul filtrului este între amplificator și convertor.</p>
+    <svg viewBox="0 0 1060 190" width="100%" role="img" aria-label="Lanțul de măsurare cu filtrul antialias">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0f2a4a"/></marker></defs>
+      <g font-size="14" font-weight="600">
+        <rect x="10" y="50" width="140" height="80" rx="12" fill="#eaf1fd" stroke="#2f6fd6"/><text x="80" y="85" text-anchor="middle" fill="#0f2a4a">Pt100</text><text x="80" y="105" text-anchor="middle" fill="#5b6778" font-weight="400" font-size="12">în punte (C03 / L05)</text>
+        <rect x="195" y="50" width="160" height="80" rx="12" fill="#eaf1fd" stroke="#2f6fd6"/><text x="275" y="85" text-anchor="middle" fill="#0f2a4a">Ampl. instrumentație</text><text x="275" y="105" text-anchor="middle" fill="#5b6778" font-weight="400" font-size="12">G, REF (C04 / L06)</text>
+        <rect x="400" y="38" width="190" height="104" rx="14" fill="#fff4ea" stroke="#e07a1f" stroke-width="3"/><text x="495" y="78" text-anchor="middle" fill="#b85d0d" font-size="16">FILTRU ANALOGIC</text><text x="495" y="100" text-anchor="middle" fill="#5b6778" font-weight="400" font-size="12">FTJ antialias · azi, C05</text>
+        <path d="M425 125 Q 470 125 485 118 T 565 105" fill="none" stroke="#e07a1f" stroke-width="2.5"/>
+        <rect x="635" y="50" width="150" height="80" rx="12" fill="#e7f7f5" stroke="#0e9f8e"/><text x="710" y="85" text-anchor="middle" fill="#0f2a4a">ADC ESP32</text><text x="710" y="105" text-anchor="middle" fill="#5b6778" font-weight="400" font-size="12">12 biți, f<tspan font-size="9" dy="3">e</tspan></text>
+        <rect x="830" y="50" width="210" height="80" rx="12" fill="#e7f7f5" stroke="#0e9f8e"/><text x="935" y="85" text-anchor="middle" fill="#0f2a4a">Filtru digital + calcul</text><text x="935" y="105" text-anchor="middle" fill="#5b6778" font-weight="400" font-size="12">medie, IIR, liniarizare (C02)</text>
+      </g>
+      <g stroke="#0f2a4a" stroke-width="2.2" marker-end="url(#ar)"><line x1="150" y1="90" x2="192" y2="90"/><line x1="355" y1="90" x2="397" y2="90"/><line x1="590" y1="90" x2="632" y2="90"/><line x1="785" y1="90" x2="827" y2="90"/></g>
+      <text x="530" y="178" text-anchor="middle" font-size="13" fill="#5b6778">Filtrul analogic trebuie pus ÎNAINTE de eșantionare: după ADC, o componentă aliată nu mai poate fi separată de semnal.</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;color:var(--navy)">Experiment interactiv: alierea (aliasing)</h3>
+    <p style="margin-top:0">Un ADC care eșantionează cu f<sub>e</sub> „vede” corect doar frecvențele sub <b>f<sub>e</sub>/2</b> (frecvența Nyquist). O componentă de frecvență mai mare apare în date ca o frecvență falsă, joasă. Modificați frecvențele și urmăriți ce reconstruiește placa.</p>
+    <div class="ctrl">
+      <label>Frecvența semnalului f: <span class="val" id="alF">460 Hz</span><input type="range" id="alFs" min="5" max="2000" step="5" value="460"></label>
+      <label>Frecvența de eșantionare f<sub>e</sub>: <span class="val" id="alE">500 Hz</span><input type="range" id="alEs" min="50" max="2000" step="10" value="500"></label>
+      <div class="res" style="flex:1;min-width:280px"><div><small>Nyquist f<sub>e</sub>/2</small><span id="alN">250 Hz</span></div><div><small>Frecvența văzută de ADC</small><span id="alA">40 Hz</span></div></div>
+    </div>
+    <canvas class="plot" id="cvAlias"></canvas>
+    <div class="legend"><span><i style="background:#9aa9bd"></i>semnalul real</span><span><i style="background:#e07a1f"></i>eșantioane</span><span><i style="background:#d64545"></i>ce „crede” ADC-ul (alias)</span></div>
+    <div class="callout"><b>Concluzie:</b> o componentă de 460 Hz eșantionată cu 500 Hz apare ca 40 Hz. Nicio prelucrare digitală nu o mai poate deosebi de un semnal real de 40 Hz. Remediul este să atenuăm analogic tot ce depășește f<sub>e</sub>/2, adică un <b>filtru trece-jos antialias</b>.</div>
+  </div>
+</section>
+
+<!-- B -->
+<section class="sec" id="B">
+  <div class="sec-head"><div class="badge">B</div><h2>Tipuri de filtre și gabaritul de proiectare</h2><span class="min">12 min</span></div>
+  <div class="grid4">
+    <div class="card mini"><svg viewBox="0 0 160 80" width="100%"><path d="M10 20 H70 Q90 20 100 50 T150 72" fill="none" stroke="#2f6fd6" stroke-width="3"/><line x1="10" y1="75" x2="155" y2="75" stroke="#9aa9bd"/></svg><h4>FTJ – trece-jos</h4><p>Lasă să treacă f &lt; f<sub>t</sub>. Folosit pentru antialias și pentru eliminarea zgomotului de frecvență înaltă.</p></div>
+    <div class="card mini"><svg viewBox="0 0 160 80" width="100%"><path d="M10 72 Q60 70 70 50 T100 20 H150" fill="none" stroke="#0e9f8e" stroke-width="3"/><line x1="10" y1="75" x2="155" y2="75" stroke="#9aa9bd"/></svg><h4>FTS – trece-sus</h4><p>Elimină componenta continuă și deriva lentă. Folosit la cuplajul semnalelor de accelerometru sau de microfon.</p></div>
+    <div class="card mini"><svg viewBox="0 0 160 80" width="100%"><path d="M10 72 Q45 70 55 40 Q62 20 80 20 Q98 20 105 40 Q115 70 150 72" fill="none" stroke="#6b4fbb" stroke-width="3"/><line x1="10" y1="75" x2="155" y2="75" stroke="#9aa9bd"/></svg><h4>FTB – trece-bandă</h4><p>Păstrează o bandă în jurul lui f<sub>0</sub>. Folosit la senzorii excitați în c.a. (LVDT, capacitivi, cu demodulare).</p></div>
+    <div class="card mini"><svg viewBox="0 0 160 80" width="100%"><path d="M10 20 H60 Q72 20 78 70 Q80 76 82 70 Q88 20 100 20 H150" fill="none" stroke="#d64545" stroke-width="3"/><line x1="10" y1="75" x2="155" y2="75" stroke="#9aa9bd"/></svg><h4>FOB – oprește-bandă</h4><p>„Notch”: elimină o singură frecvență, de exemplu 50 Hz de la rețea (dublu T).</p></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Gabaritul unui FTJ</h3>
+      <svg viewBox="0 0 520 300" width="100%" role="img" aria-label="Gabaritul filtrului trece-jos">
+        <rect x="60" y="30" width="170" height="40" fill="#e7f7f5"/><rect x="310" y="150" width="190" height="110" fill="#fdeaea"/>
+        <line x1="60" y1="260" x2="505" y2="260" stroke="#0f2a4a" stroke-width="2"/><line x1="60" y1="20" x2="60" y2="260" stroke="#0f2a4a" stroke-width="2"/>
+        <path d="M60 30 H180 Q230 32 250 90 Q280 180 330 230 Q380 255 500 258" fill="none" stroke="#e07a1f" stroke-width="3.5"/>
+        <path d="M60 30 H230 V260" fill="none" stroke="#2f6fd6" stroke-width="2" stroke-dasharray="6 5"/>
+        <g font-size="13" fill="#0f2a4a" font-weight="600">
+          <text x="65" y="55">bandă de trecere</text><text x="355" y="190">bandă de oprire</text><text x="240" y="140" fill="#5b6778" font-weight="500">tranziție</text>
+          <text x="230" y="280" text-anchor="middle">f<tspan font-size="10" dy="3">p</tspan></text><text x="310" y="280" text-anchor="middle">f<tspan font-size="10" dy="3">s</tspan></text>
+          <text x="40" y="74" text-anchor="end">A<tspan font-size="10" dy="3">max</tspan></text><text x="40" y="154" text-anchor="end">A<tspan font-size="10" dy="3">min</tspan></text>
+          <text x="500" y="295" text-anchor="end" fill="#5b6778">f (log)</text><text x="66" y="16" fill="#5b6778">|H| dB</text>
+        </g>
+        <line x1="230" y1="255" x2="230" y2="265" stroke="#0f2a4a"/><line x1="310" y1="150" x2="310" y2="265" stroke="#d64545" stroke-dasharray="4 4"/>
+        <line x1="45" y1="70" x2="230" y2="70" stroke="#0e9f8e" stroke-dasharray="4 4"/><line x1="45" y1="150" x2="310" y2="150" stroke="#d64545" stroke-dasharray="4 4"/>
+        <text x="150" y="110" font-size="12" fill="#2f6fd6">ideal („zid”)</text><text x="400" y="240" font-size="12" fill="#e07a1f">real</text>
+      </svg>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Patru numere definesc proiectul</h3>
+      <table class="t">
+        <tr><th>Mărime</th><th>Semnificație</th><th>Exemplu Pt100</th></tr>
+        <tr><td><b>f<sub>p</sub></b></td><td>până unde semnalul trebuie păstrat</td><td>5 Hz</td></tr>
+        <tr><td><b>A<sub>max</sub></b></td><td>atenuarea maximă admisă în bandă</td><td>0,1 dB</td></tr>
+        <tr><td><b>f<sub>s</sub></b></td><td>de unde trebuie să înceapă oprirea</td><td>f<sub>e</sub>/2 = 50 Hz</td></tr>
+        <tr><td><b>A<sub>min</sub></b></td><td>atenuarea minimă cerută în oprire</td><td>≈ 60 dB (10 biți)</td></tr>
+      </table>
+      <div class="callout t"><b>Regula pantei:</b> un filtru de ordin <b>n</b> coboară, departe de f<sub>t</sub>, cu <b>20·n dB/decadă</b> (6·n dB/octavă). Ordinul se alege din raportul f<sub>s</sub>/f<sub>p</sub> și din diferența A<sub>min</sub> − A<sub>max</sub>.</div>
+      <div class="callout b"><b>Pasiv sau activ?</b> Filtrul RC simplu (n = 1) nu are nevoie de alimentare, dar etajele RC înseriate se încarcă reciproc. Cu un amplificator operațional (filtru <b>activ</b>), celulele de ordin 2 se pot înseria fără interacțiune, iar ordinul crește fără bobine.</div>
+    </div>
+  </div>
+</section>
+
+<!-- C -->
+<section class="sec" id="C">
+  <div class="sec-head"><div class="badge">C</div><h2>Aproximări: aceeași pantă, compromisuri diferite</h2><span class="min">22 min</span></div>
+  <div class="card">
+    <p style="margin-top:0">Filtrul ideal nu se poate realiza fizic. Funcția de transfer îl <b>aproximează</b> cu un raport de polinoame, iar polii ei decid forma răspunsului. Comparați mai jos aproximările la același ordin n. Frecvența este normată la f<sub>t</sub>.</p>
+    <div class="ctrl">
+      <div class="chips" id="apChips"></div>
+      <label>Ordinul n: <span class="val" id="nVal">4</span><input type="range" id="nR" min="1" max="6" value="4"></label>
+      <label>Ondulație Cebîșev: <span class="val" id="rVal">1 dB</span><input type="range" id="rR" min="0.1" max="3" step="0.1" value="1"></label>
+      <label>Grafic
+        <select id="viewSel"><option value="mag">Amplitudine |H| (dB)</option><option value="step">Răspuns la treaptă</option><option value="gd">Întârziere de grup</option><option value="pz">Polii în planul s</option></select>
+      </label>
+    </div>
+    <canvas class="plot" id="cvBode" style="height:380px"></canvas>
+    <div class="legend" id="bodeLegend"></div>
+  </div>
+  <div class="grid4">
+    <div class="card mini" style="border-top:5px solid #2f6fd6"><h4>Butterworth</h4><p><b>Amplitudine maxim plată</b> în bandă și un compromis bun între pantă și oscilații. Este alegerea implicită.</p><p class="mono" style="margin-top:8px;font-size:12px">|H|² = 1 / (1 + (ω/ω<sub>t</sub>)<sup>2n</sup>)</p></div>
+    <div class="card mini" style="border-top:5px solid #e07a1f"><h4>Cebîșev</h4><p>Are ondulații egale în bandă și cea mai abruptă pantă la același n. Răspunsul la treaptă prezintă suprareglaj.</p></div>
+    <div class="card mini" style="border-top:5px solid #0e9f8e"><h4>Bessel</h4><p><b>Întârziere de grup constantă</b>: forma impulsurilor se păstrează. Panta este cea mai lentă, dar răspunsul la treaptă nu are aproape deloc suprareglaj.</p></div>
+    <div class="card mini" style="border-top:5px solid #6b4fbb"><h4>Cauer (eliptic)</h4><p>Are ondulații atât în bandă, cât și în oprire, și cea mai îngustă tranziție. Necesită zerouri, deci scheme mai complexe (BIQUAD).</p></div>
+  </div>
+  <div class="callout"><b>Cum alegem pentru măsurare:</b> pentru temperatură, presiune sau greutate (semnale lente, valoarea contează) alegem <b>Butterworth</b>. Pentru impulsuri, ECG, vibrații sau orice semnal la care forma în timp contează alegem <b>Bessel</b>. <b>Cebîșev</b> sau <b>Cauer</b> se justifică doar când tranziția trebuie să fie foarte îngustă și putem tolera ondulația.</div>
+</section>
+
+<!-- D -->
+<section class="sec" id="D">
+  <div class="sec-head"><div class="badge">D</div><h2>Celula Sallen-Key: cum o dimensionăm efectiv</h2><span class="min">25 min</span></div>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">FTJ de ordin 2, câștig unitar</h3>
+      <svg viewBox="0 0 520 260" width="100%" role="img" aria-label="Schema Sallen-Key trece-jos">
+        <g stroke="#0f2a4a" stroke-width="2.2" fill="none">
+          <circle cx="30" cy="130" r="4" fill="#0f2a4a"/><line x1="34" y1="130" x2="70" y2="130"/>
+          <path d="M70 130 l5 -9 l10 18 l10 -18 l10 18 l10 -18 l10 18 l5 -9"/><line x1="130" y1="130" x2="180" y2="130"/>
+          <path d="M180 130 l5 -9 l10 18 l10 -18 l10 18 l10 -18 l10 18 l5 -9"/><line x1="240" y1="130" x2="330" y2="130"/>
+          <circle cx="155" cy="130" r="3.5" fill="#0f2a4a"/><line x1="155" y1="130" x2="155" y2="60"/><line x1="155" y1="60" x2="245" y2="60"/><line x1="245" y1="44" x2="245" y2="76"/><line x1="256" y1="44" x2="256" y2="76"/><line x1="256" y1="60" x2="450" y2="60"/><line x1="450" y1="60" x2="450" y2="150"/>
+          <circle cx="270" cy="130" r="3.5" fill="#0f2a4a"/><line x1="270" y1="130" x2="270" y2="180"/><line x1="254" y1="180" x2="286" y2="180"/><line x1="254" y1="191" x2="286" y2="191"/><line x1="270" y1="191" x2="270" y2="222"/><line x1="258" y1="222" x2="282" y2="222"/><line x1="263" y1="229" x2="277" y2="229"/>
+          <path d="M330 105 L330 195 L420 150 Z" fill="#fff4ea" stroke="#e07a1f"/>
+          <line x1="315" y1="172" x2="330" y2="172"/><line x1="315" y1="172" x2="315" y2="215"/><line x1="315" y1="215" x2="470" y2="215"/><line x1="470" y1="215" x2="470" y2="150"/>
+          <line x1="420" y1="150" x2="496" y2="150"/><circle cx="450" cy="150" r="3.5" fill="#0f2a4a"/><circle cx="470" cy="150" r="3.5" fill="#0f2a4a"/><circle cx="500" cy="150" r="4" fill="#0f2a4a"/>
+        </g>
+        <g font-size="14" font-weight="700" fill="#0f2a4a">
+          <text x="100" y="112" text-anchor="middle">R1</text><text x="210" y="112" text-anchor="middle">R2</text><text x="250" y="36" text-anchor="middle" fill="#e07a1f">C1</text><text x="236" y="192" fill="#e07a1f" text-anchor="end">C2</text>
+          <text x="336" y="136" font-size="16">+</text><text x="336" y="178" font-size="18">−</text><text x="20" y="118">IN</text><text x="480" y="140">OUT</text>
+        </g>
+        <text x="20" y="252" font-size="12" fill="#5b6778">C1 duce reacția pozitivă la ieșire, C2 este legat la masă, iar AO lucrează ca repetor.</text>
+      </svg>
+      <div class="formula">f<sub>0</sub> = 1 / (2π·√(R1·R2·C1·C2))</div><br>
+      <div class="formula">R1 = R2 = R ⇒ Q = ½·√(C1/C2)</div>
+      <p style="font-size:14px;color:var(--muted)">Rețeta: alegeți R (1–100 kΩ), apoi <b>C1 = 2Q/(ω<sub>0</sub>R)</b> și <b>C2 = 1/(2Q·ω<sub>0</sub>R)</b>. Raportul C1/C2 = 4Q² stabilește aproximarea: pentru Butterworth, Q = 0,707 dă C1 = 2·C2.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Calculator Sallen-Key</h3>
+      <div class="ctrl">
+        <label>f<sub>0</sub> (Hz)<input type="number" id="skF" value="1000" min="0.1" step="any"></label>
+        <label>R (Ω)<input type="number" id="skR" value="1000" min="10" step="any"></label>
+        <label>Q<select id="skQ"><option value="0.7071">0,707 – Butterworth</option><option value="0.5773">0,577 – Bessel*</option><option value="0.9565">0,957 – Cebîșev 1 dB</option><option value="0.5">0,5 – amortizare critică</option></select></label>
+        <label>Serie condensatoare<select id="skE"><option value="12">E12</option><option value="24">E24</option><option value="6">E6</option></select></label>
+      </div>
+      <div class="res">
+        <div><small>C1 calculat</small><span id="skC1">–</span></div><div><small>C2 calculat</small><span id="skC2">–</span></div>
+        <div><small>C1 standard</small><span id="skC1s">–</span></div><div><small>C2 standard</small><span id="skC2s">–</span></div>
+        <div><small>f<sub>0</sub> real</small><span id="skFr">–</span></div><div><small>Q real</small><span id="skQr">–</span></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted)">* Pentru Bessel cu n = 2 ținta este f<sub>0</sub> = 1,27·f<sub>t</sub> și Q = 0,577, ca −3 dB să cadă la f<sub>t</sub>.</p>
+      <h4 style="margin:12px 0 4px;color:var(--navy)">Netlist SPICE (LTspice, ngspice)</h4>
+      <pre class="code" id="skNet"></pre>
+      <div class="callout t" style="font-size:14px"><b>Din materialele noastre:</b> lecția LTspice „2nd_order_butterworth_lp” (2019) folosea exact R = 1 kΩ, C1 = 224 nF și C2 = 112 nF, ceea ce dă f<sub>0</sub> ≈ 1 kHz și Q = 0,707. Introduceți aceste valori în calculator și verificați.</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;color:var(--navy)">Ordin mai mare = celule de ordin 2 în cascadă</h3>
+    <p style="margin-top:0">Nu se construiește o singură celulă de ordin n. Polii se grupează în perechi complex conjugate, iar fiecare pereche devine o celulă Sallen-Key cu f<sub>0</sub> și Q proprii. Un pol real rămas (n impar) devine o celulă RC. Tabelul urmărește aproximarea și ordinul alese la secțiunea C.</p>
+    <div class="ctrl"><label>f<sub>t</sub> a filtrului (Hz)<input type="number" id="casF" value="10" step="any"></label><span class="pill" id="casInfo"></span></div>
+    <table class="t" id="casT"></table>
+    <div class="callout"><b>Ordinea etajelor:</b> celula cu Q cel mai mic se pune prima, iar cea cu Q mare ultima. Astfel, vârful de rezonanță al celulei cu Q mare nu saturează etajele următoare.</div>
+  </div>
+</section>
+
+<!-- E -->
+<section class="sec" id="E">
+  <div class="sec-head"><div class="badge">E</div><h2>Exemplul complet: antialias pentru Pt100 → AI → ESP32</h2><span class="min">18 min</span></div>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Calculator de ordin (Butterworth)</h3>
+      <div class="ctrl">
+        <label>f<sub>e</sub> ADC (Hz)<input type="number" id="aaFe" value="100" step="any"></label>
+        <label>f<sub>t</sub> filtru (Hz)<input type="number" id="aaFt" value="5" step="any"></label>
+        <label>Rezoluție efectivă ENOB (biți)<input type="number" id="aaN" value="10" min="4" max="16"></label>
+      </div>
+      <div class="res">
+        <div><small>Atenuare cerută la f<sub>e</sub>/2</small><span id="aaA">–</span></div>
+        <div><small>Ordin minim n</small><span id="aaOrd">–</span></div>
+        <div><small>RC simplu (n=1) la f<sub>e</sub>/2</small><span id="aa1">–</span></div>
+        <div><small>Sallen-Key (n=2) la f<sub>e</sub>/2</small><span id="aa2">–</span></div>
+      </div>
+      <p class="formula" style="margin-top:12px">A<sub>min</sub> = 6,02·N + 1,76 dB&nbsp;&nbsp;&nbsp;n ≥ lg(10<sup>A/10</sup>−1) / (2·lg(f<sub>N</sub>/f<sub>t</sub>))</p>
+      <canvas class="plot" id="cvAA" style="height:260px"></canvas>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--navy)">Ce facem efectiv pe placă</h3>
+      <div class="callout b"><b>Problema reală:</b> cu f<sub>e</sub> = 100 Hz și f<sub>t</sub> = 5 Hz, un filtru analogic pur pentru 10 biți ar avea nevoie de ordin 4, adică două celule Sallen-Key cu componente de ordinul µF. Soluția practică are <b>două trepte</b>.</div>
+      <ol>
+        <li><b>Supraeșantionare.</b> ESP32 citește, de exemplu, la 5 kHz. Nyquist urcă la 2,5 kHz, iar filtrul analogic Sallen-Key de ordin 2 (sau chiar un RC) are de acoperit o tranziție de câteva decade.</li>
+        <li><b>Filtru digital + decimare.</b> Pe placă se mediază 100 de eșantioane. Fereastra de 20 ms conține o perioadă întreagă de 50 Hz, deci brumul se anulează.</li>
+      </ol>
+      <pre class="code"><button class="copy" data-c="espCode">Copiază</button><code id="espCode">// ESP32 – medie pe 20 ms (anulează 50 Hz) + IIR
+const int PIN = 34;          // ieșirea filtrului Sallen-Key
+const int N = 100;           // 100 eșantioane la 5 kHz = 20 ms
+float y = 0;                 // ieșirea filtrului digital
+void setup(){ Serial.begin(115200); analogReadResolution(12); }
+void loop(){
+  uint32_t s = 0;
+  for(int i=0;i&lt;N;i++){ s += analogReadMilliVolts(PIN); delayMicroseconds(200); }
+  float mv = s / (float)N;   // 50 Hz rejectat (perioadă întreagă)
+  y += 0.1f * (mv - y);      // FTJ digital de ordin 1 (IIR)
+  Serial.println(y, 2);      // mV -&gt; temperatură, cu aproximarea din C02
+}</code></pre>
+      <div class="callout t"><b>Mesajul cursului:</b> filtrul analogic <b>nu</b> se înlocuiește cu cel digital. Filtrul analogic împiedică alierea, iar cel digital rafinează rezultatul. Rețineți și că intrarea ADC-ului ESP32 are nevoie de un condensator de 10–100 nF spre masă, aproape de pin.</div>
+    </div>
+  </div>
+</section>
+
+<!-- F -->
+<section class="sec" id="F">
+  <div class="sec-head"><div class="badge">F</div><h2>Unde întâlnim filtrele în practică</h2><span class="min">8 min</span></div>
+  <div class="grid3">
+    <div class="card mini"><span class="pill">Rețea</span><h4>Notch 50 Hz (dublu T)</h4><p>Pentru măsurări biomedicale și pentru senzori cu cabluri lungi în hală. Atenție: notch-ul este sensibil la toleranța componentelor.</p></div>
+    <div class="card mini"><span class="pill">Proces</span><h4>Traductor 4–20 mA</h4><p>Transmițătorul conține deja un FTJ, cu timpul de răspuns reglabil (damping). Revenim la el în C06.</p></div>
+    <div class="card mini"><span class="pill">Circuite integrate</span><h4>Filtrul universal (UAF42, MAX274)</h4><p>FTJ, FTS și FTB în același cip, programat din rezistențe sau digital. Corespunde capitolului 3.2 din fișă.</p></div>
+    <div class="card mini"><span class="pill">Vibrații</span><h4>Accelerometre IEPE / MEMS</h4><p>Un FTS elimină componenta continuă, iar un FTJ Bessel păstrează forma șocurilor.</p></div>
+    <div class="card mini"><span class="pill">Audio / ultrasunet</span><h4>FTB pentru senzori excitați în c.a.</h4><p>Senzorii inductivi (LVDT) și capacitivi din C03 sunt urmați de un FTB centrat pe purtătoare și de un demodulator.</p></div>
+    <div class="card mini"><span class="pill">Instrumente</span><h4>Plăcile de achiziție</h4><p>Fiecare canal de achiziție de calitate are un antialias de ordin 4–8 sau un ADC sigma-delta cu filtru digital integrat.</p></div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;color:var(--navy)">Unelte de proiectare asistată (CAD) recomandate</h3>
+    <table class="t">
+      <tr><th>Unealtă</th><th>Ce face</th><th>La CCM</th></tr>
+      <tr><td>LTspice / ngspice</td><td>Simulare .AC și .TRAN a celulei, cu modelul AO real</td><td>verificăm Sallen-Key-ul de azi</td></tr>
+      <tr><td>Analog Filter Wizard (ADI), FilterPro / WEBENCH (TI)</td><td>Dau topologia și valorile din gabarit</td><td>punct de pornire pentru proiect</td></tr>
+      <tr><td>Python (scipy.signal) / MATLAB</td><td><span class="mono">buttap, cheb1ap, besselap, freqs</span>: poli și răspuns</td><td>exact ce calculează pagina aceasta</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- G -->
+<section class="sec" id="G">
+  <div class="sec-head"><div class="badge">G</div><h2>Recapitulare și test rapid</h2><span class="min">5 min</span></div>
+  <div class="grid2">
+    <div class="card">
+      <ul style="margin-top:0">
+        <li>Filtrul analogic stă <b>între AI și ADC</b> și atenuează tot ce depășește f<sub>e</sub>/2.</li>
+        <li>Gabaritul are 4 numere: f<sub>p</sub>, A<sub>max</sub>, f<sub>s</sub>, A<sub>min</sub>. Panta este de 20·n dB/decadă.</li>
+        <li>Butterworth este alegerea implicită, Bessel păstrează forma, Cebîșev și Cauer dau o tranziție îngustă.</li>
+        <li>Sallen-Key cu R egale: Q = ½·√(C1/C2). Butterworth înseamnă C1 = 2·C2.</li>
+        <li>Pe ESP32 combinăm supraeșantionarea, un antialias analogic modest și filtrarea digitală.</li>
+      </ul>
+      <div class="callout b"><b>Pentru proiect (temele de la ședințele 9–10):</b> fiecare echipă își fixează gabaritul, dimensionează filtrul, îl simulează în LTspice și atașează graficul .AC.<br><b>Data viitoare (C06):</b> convertoare în semnal unificat, 4–20 mA și 0–10 V.</div>
+    </div>
+    <div class="card" id="quiz"><div class="score" id="qScore">Scor: 0 / 6</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="card">
+    <h3 style="margin-top:0;color:var(--navy)">Surse folosite</h3>
+    <ul class="src">
+      <li><b>Materiale proprii (Drive, „!florin lectii si cursuri / Curs CCM FIE IV ID / curs moodle / curs 7.pdf”)</b>: capitolul 4, aproximările Butterworth, Cebîșev, invers Cebîșev, Cauer și Bessel, cu simulări SPICE, MATLAB și Simulink. Tabelul polilor Bessel și structurile BIQUAD provin de aici.</li>
+      <li><b>Materiale proprii (Drive, „!florin lectii si cursuri / LTspiceXVII / Lectie 2 2nd_order_butterworth_lp.asc”, 2019)</b>: celula Sallen-Key cu R = 1 kΩ, C1 = 224 nF și C2 = 112 nF.</li>
+      <li><b>Fișa disciplinei CCM</b>, capitolul 3: modelarea și simularea filtrelor analogice și filtrele universale.</li>
+      <li>Bibliografia fișei: C. Cepișcă, <i>Prelucrarea semnalelor analogice</i>, Ed. Electra, 2005; S. Grigorescu, C. Cepișcă, <i>Proiectarea și simularea circuitelor electronice cu amplificatoare operaționale</i>, ICPE, 2001.</li>
+      <li>Surse deschise: Texas Instruments, <i>Op Amps for Everyone</i>, cap. „Active Filter Design Techniques”; Analog Devices, <i>Analog Filter Wizard</i>; documentația Espressif ESP32 ADC.</li>
+    </ul>
+  </div>
+  <p>CCM_C05_Filtre_Analogice_v1.0 · © Florin Ciprian Argatu · UPB FIE DMAECS · 2026–2027</p>
+</footer>
+</main>
+
+<script>
+/* ---------- complex helpers ---------- */
+const C=(re,im)=>({re,im});
+const cmul=(a,b)=>C(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);
+const cabs=a=>Math.hypot(a.re,a.im);
+
+/* ---------- canvas plot ---------- */
+function setupCanvas(cv){const r=cv.getBoundingClientRect();const d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w:r.width,h:r.height};}
+function plot(cv,o){
+  const {g,w,h}=setupCanvas(cv);const L=60,R=16,T=14,B=42;const pw=w-L-R,ph=h-T-B;
+  const lx=v=>o.xlog?Math.log10(v):v;const x0=lx(o.xmin),x1=lx(o.xmax);
+  const X=v=>L+(lx(v)-x0)/(x1-x0)*pw;const Y=v=>T+(1-(v-o.ymin)/(o.ymax-o.ymin))*ph;
+  g.clearRect(0,0,w,h);g.font='12px Inter,sans-serif';g.strokeStyle='#e3e8f0';g.fillStyle='#5b6778';g.lineWidth=1;
+  // grid
+  if(o.xlog){for(let e=Math.floor(x0);e<=Math.ceil(x1);e++){for(let m=1;m<10;m++){const v=m*Math.pow(10,e);if(v<o.xmin||v>o.xmax)continue;const xx=X(v);g.strokeStyle=m==1?'#cfd7e3':'#eef1f6';g.beginPath();g.moveTo(xx,T);g.lineTo(xx,T+ph);g.stroke();if(m==1){g.fillText(fmtTick(v),xx-10,T+ph+16);}}}}
+  else{const st=o.xstep;for(let v=Math.ceil(o.xmin/st)*st;v<=o.xmax+1e-9;v+=st){const xx=X(v);g.strokeStyle='#e8ecf3';g.beginPath();g.moveTo(xx,T);g.lineTo(xx,T+ph);g.stroke();g.fillText(fmtTick(v),xx-10,T+ph+16);}}
+  const ys=o.ystep;for(let v=Math.ceil(o.ymin/ys)*ys;v<=o.ymax+1e-9;v+=ys){const yy=Y(v);g.strokeStyle='#e8ecf3';g.beginPath();g.moveTo(L,yy);g.lineTo(L+pw,yy);g.stroke();g.fillText(fmtTick(v),8,yy+4);}
+  g.strokeStyle='#0f2a4a';g.lineWidth=1.4;g.strokeRect(L,T,pw,ph);
+  g.fillStyle='#0f2a4a';g.font='600 12px Inter,sans-serif';g.fillText(o.xlabel||'',L+pw/2-40,h-6);g.save();g.translate(14,T+ph/2+30);g.rotate(-Math.PI/2);g.fillText(o.ylabel||'',0,0);g.restore();
+  g.save();g.beginPath();g.rect(L,T,pw,ph);g.clip();
+  (o.hlines||[]).forEach(l=>{g.strokeStyle=l.c;g.setLineDash([5,4]);g.lineWidth=1.3;g.beginPath();g.moveTo(L,Y(l.y));g.lineTo(L+pw,Y(l.y));g.stroke();g.setLineDash([]);if(l.t){g.fillStyle=l.c;g.font='11px Inter';g.fillText(l.t,L+pw-110,Y(l.y)-4);}});
+  (o.vlines||[]).forEach(l=>{g.strokeStyle=l.c;g.setLineDash([5,4]);g.lineWidth=1.3;g.beginPath();g.moveTo(X(l.x),T);g.lineTo(X(l.x),T+ph);g.stroke();g.setLineDash([]);if(l.t){g.fillStyle=l.c;g.font='11px Inter';g.fillText(l.t,X(l.x)+4,T+14);}});
+  (o.series||[]).forEach(s=>{g.strokeStyle=s.c;g.lineWidth=s.w||2.4;g.setLineDash(s.dash||[]);g.beginPath();let st=false;s.p.forEach(([a,b])=>{if(!isFinite(b))return;const xx=X(a),yy=Y(b);if(!st){g.moveTo(xx,yy);st=true}else g.lineTo(xx,yy)});g.stroke();g.setLineDash([]);
+    if(s.dots){g.fillStyle=s.c;s.p.forEach(([a,b])=>{g.beginPath();g.arc(X(a),Y(b),s.r||4,0,7);g.fill()})}});
+  (o.marks||[]).forEach(m=>{g.strokeStyle=m.c;g.lineWidth=2.4;const xx=X(m.x),yy=Y(m.y);if(m.type=='x'){g.beginPath();g.moveTo(xx-6,yy-6);g.lineTo(xx+6,yy+6);g.moveTo(xx+6,yy-6);g.lineTo(xx-6,yy+6);g.stroke()}else{g.beginPath();g.arc(xx,yy,6,0,7);g.stroke()}});
+  g.restore();
+}
+function fmtTick(v){if(Math.abs(v)>=1000)return (v/1000)+'k';if(Math.abs(v)<0.01&&v!=0)return v.toExponential(0);return +v.toFixed(2)+'';}
+function eng(v,u){const a=Math.abs(v);const p=[[1e-12,'p'],[1e-9,'n'],[1e-6,'µ'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M']];let s=p[0];for(const q of p){if(a>=q[0])s=q}return (v/s[0]).toPrecision(3).replace('.',',')+' '+s[1]+u;}
+function engS(v){const a=Math.abs(v);const p=[[1e-12,'p'],[1e-9,'n'],[1e-6,'u'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'Meg']];let s=p[0];for(const q of p){if(a>=q[0])s=q}return +(v/s[0]).toPrecision(4)+s[1];}
+
+/* ---------- A: aliasing ---------- */
+function drawAlias(){
+  const f=+alFs.value,fe=+alEs.value;alF.textContent=f+' Hz';alE.textContent=fe+' Hz';alN.textContent=fe/2+' Hz';
+  const k=Math.round(f/fe);const fa=Math.abs(f-k*fe);alA.textContent=fa+' Hz';alA.style.color=f>fe/2?'#d64545':'#0e9f8e';
+  const Tw=Math.max(8/fe,3/Math.max(f,1))*1.0;const tw=Math.min(Tw,0.06);
+  const real=[],al=[],sm=[];const N=1500;
+  for(let i=0;i<=N;i++){const t=i/N*tw;real.push([t*1000,Math.sin(2*Math.PI*f*t)]);}
+  const sgn=(f-k*fe)>=0?1:-1;
+  for(let i=0;i<=N;i++){const t=i/N*tw;al.push([t*1000,sgn*Math.sin(2*Math.PI*fa*t)]);}
+  for(let t=0;t<=tw+1e-12;t+=1/fe){sm.push([t*1000,Math.sin(2*Math.PI*f*t)]);}
+  plot(cvAlias,{xmin:0,xmax:tw*1000,ymin:-1.3,ymax:1.3,xstep:niceStep(tw*1000),ystep:0.5,xlabel:'t (ms)',ylabel:'amplitudine',
+    series:[{p:real,c:'#9aa9bd',w:1.6},{p:al,c:'#d64545',w:2.6},{p:sm,c:'#e07a1f',w:0,dots:true,r:4.5}]});
+}
+function niceStep(r){const raw=r/8;const p=Math.pow(10,Math.floor(Math.log10(raw)));const m=raw/p;return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p;}
+[alFs,alEs].forEach(e=>e.oninput=drawAlias);
+
+/* ---------- C: approximations ---------- */
+const BESSEL={1:[[-1,0]],2:[[-1.1016,0.6360]],3:[[-1.3226,0],[-1.0474,0.9992]],4:[[-1.3700,0.4102],[-0.9952,1.2571]],5:[[-1.5023,0],[-1.3808,0.7179],[-0.9576,1.4711]],6:[[-1.5716,0.3209],[-1.3819,0.9715],[-0.9307,1.6620]]};
+const AP=[{k:'butter',n:'Butterworth',c:'#2f6fd6'},{k:'cheb',n:'Cebîșev',c:'#e07a1f'},{k:'bessel',n:'Bessel',c:'#0e9f8e'}];
+let apOn={butter:true,cheb:true,bessel:true};
+function poles(type,n,rip){ // returns list of complex poles (all, conj included)
+  const P=[];
+  if(type=='butter'){for(let k=1;k<=n;k++){const th=Math.PI*(2*k+n-1)/(2*n);P.push(C(Math.cos(th),Math.sin(th)));}}
+  else if(type=='cheb'){const eps=Math.sqrt(Math.pow(10,rip/10)-1);const a=Math.asinh(1/eps)/n;for(let k=1;k<=n;k++){const th=(2*k-1)*Math.PI/(2*n);P.push(C(-Math.sinh(a)*Math.sin(th),Math.cosh(a)*Math.cos(th)));}}
+  else{BESSEL[n].forEach(([re,im])=>{P.push(C(re,im));if(im!==0)P.push(C(re,-im));});}
+  return P;
+}
+function gainK(type,n,rip,P){let K=C(1,0);P.forEach(p=>K=cmul(K,C(-p.re,-p.im)));let k=K.re;if(type=='cheb'&&n%2==0)k/=Math.sqrt(1+Math.pow(10,rip/10)-1);return k;}
+function Hmag(P,K,w){let d=C(1,0);P.forEach(p=>d=cmul(d,C(-p.re,w-p.im)));return K/cabs(d);}
+function gdelay(P,w){let s=0;P.forEach(p=>{s+=(-p.re)/((w-p.im)**2+p.re**2)});return s;}
+function sections(P){const S=[];P.forEach(p=>{if(Math.abs(p.im)<1e-9)S.push({t:1,a:-p.re});else if(p.im>0){const w0=cabs(p);S.push({t:2,w0,Q:w0/(-2*p.re)});}});S.sort((a,b)=>(a.t==1?0:a.Q)-(b.t==1?0:b.Q));return S;}
+function stepResp(type,n,rip,tmax){
+  const P=poles(type,n,rip);const S=sections(P);let gk=1;if(type=='cheb'&&n%2==0)gk=1/Math.sqrt(Math.pow(10,rip/10));
+  const dim=S.reduce((a,s)=>a+s.t,0);let x=new Float64Array(dim);const dt=tmax/4000;const out=[];
+  const f=(x)=>{const dx=new Float64Array(dim);let u=1,i=0;S.forEach(s=>{if(s.t==1){dx[i]=s.a*(u-x[i]);u=x[i];i++;}else{dx[i]=x[i+1];dx[i+1]=s.w0*s.w0*(u-x[i])-(s.w0/s.Q)*x[i+1];u=x[i];i+=2;}});return dx;};
+  const yOut=x=>{let i=0,y=0;S.forEach(s=>{y=x[i];i+=s.t});return y;};
+  for(let k=0;k<=4000;k++){if(k%10==0)out.push([k*dt,gk*yOut(x)]);const k1=f(x);const x2=x.map((v,j)=>v+dt/2*k1[j]);const k2=f(x2);const x3=x.map((v,j)=>v+dt/2*k2[j]);const k3=f(x3);const x4=x.map((v,j)=>v+dt*k3[j]);const k4=f(x4);x=x.map((v,j)=>v+dt/6*(k1[j]+2*k2[j]+2*k3[j]+k4[j]));}
+  return out;
+}
+const chipsEl=document.getElementById('apChips');
+AP.forEach(a=>{const b=document.createElement('button');b.className='chip on';b.textContent=a.n;b.style.background=a.c;b.style.borderColor=a.c;b.onclick=()=>{apOn[a.k]=!apOn[a.k];b.classList.toggle('on');b.style.background=apOn[a.k]?a.c:'#fff';b.style.color=apOn[a.k]?'#fff':a.c;drawBode();};chipsEl.appendChild(b);});
+function drawBode(){
+  const n=+nR.value,rip=+rR.value;nVal.textContent=n;rVal.textContent=rip.toFixed(1).replace('.',',')+' dB';const view=viewSel.value;
+  const series=[];const leg=[];
+  AP.forEach(a=>{if(!apOn[a.k])return;const P=poles(a.k,n,rip);const K=gainK(a.k,n,rip,P);let pts=[];
+    if(view=='mag'){for(let i=0;i<=500;i++){const w=Math.pow(10,-1+2*i/500);pts.push([w,20*Math.log10(Hmag(P,K,w))]);}}
+    else if(view=='gd'){for(let i=0;i<=500;i++){const w=Math.pow(10,-1+2*i/500);pts.push([w,gdelay(P,w)]);}}
+    else if(view=='step'){pts=stepResp(a.k,n,rip,20);}
+    else {pts=P.map(p=>[p.re,p.im]);}
+    series.push({p:pts,c:a.c,w:view=='pz'?0:2.6,dots:view=='pz',r:6});
+    const extra=view=='step'?(' · suprareglaj '+Math.max(0,(Math.max(...pts.map(q=>q[1]))-(a.k=='cheb'&&n%2==0?1/Math.sqrt(Math.pow(10,rip/10)):1))*100).toFixed(1)+'%'):view=='mag'?(' · la 2fₜ: '+(20*Math.log10(Hmag(P,K,2))).toFixed(1)+' dB'):'';
+    leg.push(`<span><i style="background:${a.c}"></i>${a.n}${extra}</span>`);});
+  bodeLegend.innerHTML=leg.join('');
+  if(view=='mag')plot(cvBode,{xlog:true,xmin:0.1,xmax:10,ymin:-80,ymax:5,ystep:10,xlabel:'f / f_t',ylabel:'|H| (dB)',series,hlines:[{y:-3,c:'#6b4fbb',t:'−3 dB'}],vlines:[{x:1,c:'#5b6778'}]});
+  else if(view=='gd')plot(cvBode,{xlog:true,xmin:0.1,xmax:10,ymin:0,ymax:Math.ceil(Math.max(...series.flatMap(s=>s.p.map(q=>q[1])),1)),ystep:1,xlabel:'f / f_t',ylabel:'τ · ω_t',series});
+  else if(view=='step')plot(cvBode,{xmin:0,xmax:20,ymin:0,ymax:1.4,xstep:2,ystep:0.2,xlabel:'t · ω_t',ylabel:'ieșire',series,hlines:[{y:1,c:'#5b6778'}]});
+  else plot(cvBode,{xmin:-2,xmax:0.5,ymin:-1.8,ymax:1.8,xstep:0.5,ystep:0.5,xlabel:'σ (Re s)',ylabel:'jω (Im s)',series,vlines:[{x:0,c:'#d64545',t:'axa jω'}]});
+  drawCascade();
+}
+[nR,rR].forEach(e=>e.oninput=drawBode);viewSel.onchange=drawBode;
+
+/* ---------- D: Sallen-Key ---------- */
+const ESER={6:[1,1.5,2.2,3.3,4.7,6.8],12:[1,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2],24:[1,1.1,1.2,1.3,1.5,1.6,1.8,2,2.2,2.4,2.7,3,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1]};
+function nearestE(v,s){const e=Math.floor(Math.log10(v));let best=v,bd=1e9;for(let k=e-1;k<=e+1;k++)ESER[s].forEach(m=>{const c=m*Math.pow(10,k);const d=Math.abs(Math.log(c/v));if(d<bd){bd=d;best=c}});return best;}
+function calcSK(){
+  const f=+skF.value,R=+skR.value,Q=+skQ.value,s=+skE.value;if(!(f>0&&R>0))return;const w=2*Math.PI*f;
+  const c1=2*Q/(w*R),c2=1/(2*Q*w*R);const c1s=nearestE(c1,s),c2s=nearestE(c2,s);
+  const fr=1/(2*Math.PI*R*Math.sqrt(c1s*c2s)),qr=0.5*Math.sqrt(c1s/c2s);
+  skC1.textContent=eng(c1,'F');skC2.textContent=eng(c2,'F');skC1s.textContent=eng(c1s,'F');skC2s.textContent=eng(c2s,'F');
+  skFr.textContent=eng(fr,'Hz')+' ('+((fr/f-1)*100).toFixed(1)+'%)';skQr.textContent=qr.toFixed(3).replace('.',',');
+  const lo=Math.max(f/100,0.01),hi=f*100;
+  skNet.innerHTML='<button class="copy" data-c="skNetTxt">Copiază</button><code id="skNetTxt">'+
+`* CCM C05 - FTJ Sallen-Key n=2, f0=${engS(f)}Hz, Q=${Q}
+V1 IN 0 AC 1
+R1 IN N1 ${engS(R)}
+R2 N1 N2 ${engS(R)}
+C1 N1 OUT ${engS(c1s)}
+C2 N2 0 ${engS(c2s)}
+* AO ideal ca repetor (inlocuiti cu modelul real, ex. LTC6241 / MCP6002)
+E1 OUT 0 N2 OUT 1e5
+.ac dec 50 ${engS(lo)} ${engS(hi)}
+.end</code>`;bindCopy();
+}
+[skF,skR,skQ,skE].forEach(e=>e.oninput=calcSK);
+
+function drawCascade(){
+  const n=+nR.value,rip=+rR.value;const ft=+casF.value||1;
+  const types=AP.filter(a=>apOn[a.k]);const a=types[0]||AP[0];const P=poles(a.k,n,rip);const S=sections(P);
+  casInfo.textContent=a.n+', n = '+n+(a.k=='cheb'?', ondulație '+rip+' dB':'')+' (prima aproximare activă din secțiunea C)';
+  let h='<tr><th>Etaj</th><th>Tip</th><th>f₀ etaj</th><th>Q</th><th>C1 / C2 (R = 10 kΩ)</th></tr>';
+  S.forEach((s,i)=>{if(s.t==1){const f0=ft*s.a;h+=`<tr><td>${i+1}</td><td>RC ordin 1</td><td>${eng(f0,'Hz')}</td><td>–</td><td>C = ${eng(1/(2*Math.PI*f0*1e4),'F')}</td></tr>`;}
+    else{const f0=ft*s.w0;const w=2*Math.PI*f0;h+=`<tr><td>${i+1}</td><td>Sallen-Key ordin 2</td><td>${eng(f0,'Hz')}</td><td>${s.Q.toFixed(3).replace('.',',')}</td><td>${eng(2*s.Q/(w*1e4),'F')} / ${eng(1/(2*s.Q*w*1e4),'F')}</td></tr>`;}});
+  casT.innerHTML=h;
+}
+casF.oninput=drawCascade;
+
+/* ---------- E: antialias ---------- */
+function calcAA(){
+  const fe=+aaFe.value,ft=+aaFt.value,N=+aaN.value;if(!(fe>0&&ft>0))return;const fn=fe/2;const A=6.02*N+1.76;
+  aaA.textContent=A.toFixed(1)+' dB';
+  if(fn<=ft){aaOrd.textContent='f_t ≥ f_e/2 !';}
+  else{const n=Math.log10(Math.pow(10,A/10)-1)/(2*Math.log10(fn/ft));aaOrd.textContent=Math.ceil(n)+'  ('+n.toFixed(2).replace('.',',')+')';}
+  const att=k=>10*Math.log10(1+Math.pow(fn/ft,2*k));aa1.textContent=att(1).toFixed(1)+' dB';aa2.textContent=att(2).toFixed(1)+' dB';
+  const ser=[1,2,4,8].map((k,i)=>{const p=[];for(let j=0;j<=300;j++){const f=ft/10*Math.pow(10,(Math.log10(fe*5)-Math.log10(ft/10))*j/300);p.push([f,-10*Math.log10(1+Math.pow(f/ft,2*k))]);}return {p,c:['#9aa9bd','#2f6fd6','#e07a1f','#6b4fbb'][i],w:2.2};});
+  plot(cvAA,{xlog:true,xmin:ft/10,xmax:fe*5,ymin:-120,ymax:5,ystep:20,xlabel:'f (Hz)  ·  n = 1, 2, 4, 8',ylabel:'dB',series:ser,hlines:[{y:-A,c:'#d64545',t:'−'+A.toFixed(0)+' dB (1 LSB)'}],vlines:[{x:fn,c:'#d64545',t:'f_e/2'},{x:ft,c:'#0e9f8e',t:'f_t'}]});
+}
+[aaFe,aaFt,aaN].forEach(e=>e.oninput=calcAA);
+
+/* ---------- copy ---------- */
+function bindCopy(){document.querySelectorAll('.copy').forEach(b=>{b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);b.textContent='Copiat ✓';}catch(e){b.textContent='Selectați manual';}setTimeout(()=>b.textContent='Copiază',1600);}});}
+
+/* ---------- G: quiz ---------- */
+const QZ=[
+ {q:'Un ADC eșantionează cu 1 kHz. Cum apare în date o componentă de 900 Hz?',a:['900 Hz','100 Hz','500 Hz','Nu apare deloc'],c:1,e:'|900 − 1000| = 100 Hz. Fiind peste Nyquist (500 Hz), componenta se aliază.'},
+ {q:'Unde se plasează filtrul antialias?',a:['După ADC, în software','Între amplificator și ADC','Înaintea punții','Oriunde, efectul e același'],c:1,e:'Alierea se produce în momentul eșantionării, deci filtrul trebuie să fie analogic și să stea înaintea ADC-ului.'},
+ {q:'Ce pantă are departe de f_t un FTJ de ordin 4?',a:['20 dB/dec','40 dB/dec','80 dB/dec','6 dB/oct'],c:2,e:'Panta este de 20·n dB/decadă, deci 4·20 = 80 dB/decadă.'},
+ {q:'Ce aproximare alegeți pentru un semnal ECG (forma contează)?',a:['Cebîșev','Cauer','Bessel','Oricare'],c:2,e:'Bessel are întârziere de grup aproape constantă, deci forma semnalului se păstrează.'},
+ {q:'Sallen-Key cu R1 = R2: ce raport C1/C2 dă Butterworth (Q = 0,707)?',a:['1','2','4','0,5'],c:1,e:'C1/C2 = 4Q² = 4·0,5 = 2.'},
+ {q:'De ce mediem pe ESP32 exact 20 ms de eșantioane?',a:['Așa cere ADC-ul','Fereastra conține o perioadă întreagă de 50 Hz, deci brumul se anulează','Pentru viteză','Pentru a crește rezoluția la 16 biți'],c:1,e:'Media pe un număr întreg de perioade are zero de transmisie la 50 Hz și la armonicele lui.'}
+];
+let score=0;
+QZ.forEach((x,i)=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${i+1}. ${x.q}</p>`;let done=false;
+ x.a.forEach((t,j)=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>{if(done)return;done=true;b.classList.add(j==x.c?'ok':'ko');if(j!=x.c)d.querySelectorAll('button')[x.c].classList.add('ok');else score++;qScore.textContent='Scor: '+score+' / '+QZ.length;ex.style.display='block';};d.appendChild(b);});
+ const ex=document.createElement('div');ex.className='ex';ex.textContent=x.e;d.appendChild(ex);quiz.appendChild(d);});
+
+/* ---------- nav highlight ---------- */
+const links=[...document.querySelectorAll('nav.toc a')];
+window.addEventListener('scroll',()=>{let cur='';document.querySelectorAll('section.sec').forEach(s=>{if(s.getBoundingClientRect().top<120)cur=s.id});links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')=='#'+cur));});
+
+function drawAll(){drawAlias();drawBode();calcSK();calcAA();bindCopy();}
+window.addEventListener('resize',drawAll);drawAll();
+</script>
+</body>
+</html>
