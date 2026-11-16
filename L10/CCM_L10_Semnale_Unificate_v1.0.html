@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CCM · L10 · Semnale unificate – tensiune sau curent</title>
+<style>
+:root{--bg:#f3f5f3;--paper:#fff;--ink:#121b19;--green:#17634e;--border:#c7d1ca;--wire:#8a948f;--live:#E24B4A;--sig:#2563EB;--pwr:#DC2626;--ok:#16A34A;--hl:#EA580C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.52 system-ui,Arial}
+main{max-width:1230px;margin:auto;padding:25px}
+header{margin-bottom:20px}
+h1{font-size:clamp(27px,4vw,39px);line-height:1.15;margin:8px 0}
+h2{font-size:22px;margin:0 0 12px}
+p{margin:9px 0}
+.eyebrow{color:var(--green);font-size:13px;font-weight:800;letter-spacing:.08em}
+.card{background:var(--paper);border:1px solid var(--border);padding:20px;border-radius:13px;margin-bottom:16px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fields label{display:block;font-weight:650;font-size:13px}
+.fields input,.fields select{display:block;width:100%;margin-top:4px;font:inherit;color:inherit;border:1px solid #8d9b93;border-radius:5px;padding:7px;background:white}
+button{background:#e1eee6;border:1px solid #83a592;padding:9px 12px;border-radius:7px;color:#11241a;font:inherit;font-weight:650;cursor:pointer;margin:6px 5px 5px 0}
+button:hover{background:#cce1d2}
+.note{background:#eef4ef;border-left:4px solid var(--green);padding:12px;margin:12px 0}
+.error{color:#a01616;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0}
+.stat{background:#f8faf8;border:1px solid #dae2dd;padding:11px;border-radius:9px}
+.stat span{display:block;font-size:12px}.stat b{font-size:17px}
+.formula{background:#f7f8f6;padding:12px;text-align:center;font:19px Cambria,Georgia,serif;overflow:auto;margin:12px 0}
+.scroll{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid #c7d1ca;padding:7px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#eaf2eb}
+svg{max-width:100%;height:auto}
+svg text{font-family:system-ui,Arial}
+canvas{width:100%;border:1px solid var(--border);background:white;display:block}
+.muted{color:#475951;font-size:14px}
+.mode{display:flex;gap:0;margin:4px 0 12px}
+.mode button{margin:0;border-radius:0;flex:1;padding:12px;font-size:16px;background:#fff}
+.mode button:first-child{border-radius:8px 0 0 8px}.mode button:last-child{border-radius:0 8px 8px 0}
+.mode button.sel{background:var(--green);color:#fff;border-color:var(--green)}
+.w{stroke:var(--wire);stroke-width:3;fill:none;transition:stroke .3s}
+.w.on{stroke:var(--live);stroke-dasharray:10 6;animation:flow .8s linear infinite}
+.w.sig.on{stroke:var(--sig)}
+.w.ret.on{stroke:#6b7280}
+.w.cut{stroke:#c62828;stroke-dasharray:3 6;animation:none}
+.w.gl{stroke:#c62828;stroke-width:2.5;stroke-dasharray:7 5;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.w.on,.w.gl{animation:none}}
+.comp rect{fill:#fff;stroke:#2c4036;stroke-width:1.6;transition:fill .3s}
+.comp.act rect{fill:#C0DD97}.comp.warn rect{fill:#FAC775}.comp.bad rect{fill:#FCEBEB;stroke:#c62828;stroke-dasharray:5 4}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
+.ctl button{width:100%;text-align:left;margin:0;background:#fff}
+.ctl button b{float:right}
+.ctl button.alarm{background:#FCEBEB;border-color:#d99}
+#banner{font-weight:700;padding:10px 12px;border-radius:8px;margin:0 0 10px}
+#log{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;height:190px;overflow:auto;white-space:pre-wrap;margin:0;background:#f8faf8;border:1px solid #dae2dd;border-radius:8px;padding:8px}
+.only-v,.only-i{display:none}
+body.mv .only-v{display:block}body.mi .only-i{display:block}
+@media(max-width:850px){main{padding:12px}.cols{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.fields{grid-template-columns:1fr}}
+@media print{body{background:white}main{max-width:none;padding:0}.noPrint,button,canvas,#log{display:none!important}.card{break-inside:avoid;border:1px solid #888}.cols{display:block}table{font-size:10px}.w.on{animation:none}}
+</style>
+</head>
+<body class="mv"><main>
+<header>
+<div class="eyebrow">CCM · ANUL IV · L10 · SIMULATOR v1.0</div>
+<h1>Semnale unificate: tensiune sau curent?</h1>
+<p>Același traductor de presiune, același cablu, două semnale: <b>0–10 V</b> (traductor cu 3 fire, retur comun) și <b>4–20 mA</b> (traductor cu 2 fire, alimentat din buclă). Lungești cablul, bagi perturbații, rupi un fir, schimbi sursa și rezistorul de măsurare – și vezi pe viu ce citește receptorul. Laborator asociat cursului C06 – Semnale unificate.</p>
+</header>
+
+<section class="card" id="fisa">
+<h2>1. Fișa individuală</h2>
+<div class="fields noPrint">
+<label>Grupa<select id="grupa"><option>141ID</option><option>142ID</option></select></label>
+<label>Indicele N<input id="n" type="number" min="1" max="30" step="1" value="7"></label>
+</div>
+<button id="apply">Aplică varianta N</button><button id="ex7">Exemplul N = 7</button><button onclick="window.print()">Tipărește fișa</button>
+<div id="variant" class="note" role="status"></div>
+<p class="muted">Reguli de generare (deterministe, fără hazard): domeniul traductorului p<sub>max</sub> = 6 / 10 / 16 / 25 bar pentru N mod 4 = 0 / 1 / 2 / 3; presiunea de test p = p<sub>max</sub>·(0,30 + 0,015·N); lungimea cablului L = 50 + 10·N m; secțiunea conductorului S = 0,75 mm² pentru N impar și 0,5 mm² pentru N par; tensiunea minimă de funcționare a traductorului cu 2 fire U<sub>min</sub> = 10 + (N mod 3) V.</p>
+</section>
+
+<section class="card">
+<h2>2. Schema animată</h2>
+<div class="mode noPrint" role="group" aria-label="Tipul semnalului">
+<button id="mV" class="sel">Tensiune 0–10 V · 3 fire</button>
+<button id="mI">Curent 4–20 mA · 2 fire</button>
+</div>
+<div id="banner" role="status"></div>
+<svg id="sch" viewBox="0 0 1000 340" role="img" aria-label="Traductor în câmp legat prin cablu de receptorul din tablou; în modul tensiune trei fire (alimentare, ieșire, retur comun), în modul curent două fire în buclă cu sursa de 24 V și rezistorul de măsurare.">
+<rect x="0" y="0" width="560" height="340" fill="#eef4fb"/><rect x="560" y="0" width="440" height="340" fill="#f3f5f3"/>
+<text x="12" y="22" font-size="13" font-weight="700" fill="#475951">CÂMP</text>
+<text x="572" y="22" font-size="13" font-weight="700" fill="#475951">TABLOU</text>
+<text id="tL" x="280" y="22" text-anchor="middle" font-size="13" fill="#2563EB" font-weight="700"></text>
+<!-- traductor -->
+<g id="cTx" class="comp"><rect x="30" y="95" width="150" height="150" rx="10"/></g>
+<text x="105" y="125" text-anchor="middle" font-size="15" font-weight="700">Traductor</text>
+<text x="105" y="145" text-anchor="middle" font-size="12" fill="#475951">presiune</text>
+<text id="tTx" x="105" y="200" text-anchor="middle" font-size="13" fill="#17634e" font-weight="700"></text>
+<text id="tTx2" x="105" y="220" text-anchor="middle" font-size="12" fill="#475951"></text>
+<!-- MOD TENSIUNE -->
+<g id="gV">
+<path id="vP" class="w" d="M180 115 H700"/>
+<path id="vS" class="w sig" d="M180 170 H385 M425 170 H760"/>
+<path id="vR" class="w ret" d="M180 225 H385 M425 225 H900 V250"/>
+<g class="comp"><rect x="385" y="160" width="40" height="20" rx="2"/></g>
+<g class="comp"><rect x="385" y="215" width="40" height="20" rx="2"/></g>
+<text x="405" y="155" text-anchor="middle" font-size="11" fill="#475951">R<tspan font-size="9" dy="3">fir</tspan></text>
+<text x="405" y="210" text-anchor="middle" font-size="11" fill="#475951">R<tspan font-size="9" dy="3">fir</tspan></text>
+<text id="tRet" x="230" y="252" font-size="12" fill="#6b7280" font-weight="700"></text>
+<text x="200" y="110" font-size="12" fill="#DC2626">+24 V</text><text x="200" y="165" font-size="12" fill="#2563EB">ieșire 0–10 V</text><text x="200" y="220" font-size="12" fill="#6b7280">0 V comun</text>
+<g id="cPS" class="comp"><rect x="700" y="90" width="90" height="50" rx="8"/></g>
+<text x="745" y="112" text-anchor="middle" font-size="13" font-weight="700">Sursă</text><text x="745" y="129" text-anchor="middle" font-size="12">24 V</text>
+<path class="w" d="M790 115 H900 V225" style="stroke:#c7d1ca"/>
+<g id="cRx" class="comp"><rect x="760" y="150" width="115" height="60" rx="8"/></g>
+<text x="817" y="175" text-anchor="middle" font-size="13" font-weight="700">Receptor</text>
+<text id="tRin" x="817" y="194" text-anchor="middle" font-size="12">R_in</text>
+<path class="w" d="M817 210 V225" style="stroke:#6b7280"/>
+</g>
+<!-- MOD CURENT -->
+<g id="gI">
+<path id="iP" class="w" d="M180 130 H385 M425 130 H700"/>
+<path id="iR" class="w sig" d="M180 210 H385 M425 210 H610"/>
+<g class="comp"><rect x="385" y="120" width="40" height="20" rx="2"/></g>
+<g class="comp"><rect x="385" y="200" width="40" height="20" rx="2"/></g>
+<text x="405" y="115" text-anchor="middle" font-size="11" fill="#475951">R<tspan font-size="9" dy="3">fir</tspan></text>
+<text x="405" y="195" text-anchor="middle" font-size="11" fill="#475951">R<tspan font-size="9" dy="3">fir</tspan></text>
+<text x="200" y="125" font-size="12" fill="#DC2626">+ buclă</text><text x="200" y="205" font-size="12" fill="#2563EB">– buclă</text>
+<text id="tI" x="280" y="172" text-anchor="middle" font-size="16" font-weight="800" fill="#2563EB"></text>
+<g id="cDisp" class="comp"><rect x="610" y="190" width="80" height="40" rx="6"/></g>
+<text x="650" y="215" text-anchor="middle" font-size="12">afișaj</text>
+<path id="iD" class="w sig" d="M690 210 H760"/>
+<g id="cRs" class="comp"><rect x="760" y="190" width="60" height="40" rx="4"/></g>
+<text id="tRs" x="790" y="215" text-anchor="middle" font-size="12" font-weight="700">R_s</text>
+<path id="iRs" class="w" d="M820 210 H900 V160" style="stroke:#6b7280"/>
+<g id="cPS2" class="comp"><rect x="700" y="105" width="110" height="50" rx="8"/></g>
+<text x="755" y="127" text-anchor="middle" font-size="13" font-weight="700">Sursă buclă</text><text id="tUa" x="755" y="145" text-anchor="middle" font-size="12">24 V</text>
+<path class="w" d="M810 130 H900 V160" style="stroke:#6b7280"/>
+<g id="cAdc" class="comp"><rect x="720" y="255" width="140" height="50" rx="8"/></g>
+<text x="790" y="276" text-anchor="middle" font-size="13" font-weight="700">Intrare analogică</text>
+<text id="tAdc" x="790" y="294" text-anchor="middle" font-size="10.5"></text>
+<path class="w" d="M790 230 V255" style="stroke:#2563EB"/>
+</g>
+<!-- masa si bucla de masa -->
+<path id="gnd1" d="M90 245 V285 M75 285 H105 M80 292 H100 M86 299 H94" stroke="#121b19" stroke-width="2.5" fill="none"/>
+<path id="gnd2" d="M900 250 V290 M885 290 H915 M890 297 H910 M896 304 H904" stroke="#121b19" stroke-width="2.5" fill="none"/>
+<path id="gLoop" class="w gl" d="M90 315 H900" style="display:none"/>
+<text id="tGL" x="495" y="333" text-anchor="middle" font-size="12" fill="#c62828" font-weight="700" style="display:none">buclă de masă: ΔU = 0,30 V între cele două împământări</text>
+<text id="tRx" x="575" y="62" font-size="14" font-weight="800" fill="#17634e"></text>
+<text id="tRx2" x="575" y="80" font-size="12" fill="#475951"></text>
+</svg>
+<div class="ctl noPrint">
+<button id="bCut">Fir de semnal <b></b></button>
+<button id="bGL">Buclă de masă (ΔU = 0,3 V) <b></b></button>
+<button id="bEMI">Perturbație 50 Hz în cablu <b></b></button>
+<button id="bTx">Traductor <b></b></button>
+</div>
+<p class="muted">Fire animate = circulă curent / semnal (roșu alimentare, albastru semnal, gri retur). Component roșu întrerupt = defect; portocaliu = la limită; verde = funcționează corect.</p>
+</section>
+
+<div class="cols">
+<section class="card">
+<h2>3. Ecuațiile modelului</h2>
+<div class="formula">R<sub>fir</sub> = ρ·L / S, &nbsp; ρ<sub>Cu</sub> = 0,0175 Ω·mm²/m</div>
+<div class="only-v"><div class="formula">U<sub>citit</sub> = U<sub>s</sub>·R<sub>in</sub>/(R<sub>in</sub> + R<sub>o</sub> + R<sub>fir</sub>) + (I<sub>alim</sub> + I<sub>s</sub>)·R<sub>fir</sub> + ΔU<sub>masă</sub> + e<sub>n</sub>(t)</div>
+<p class="muted">U<sub>s</sub> = 10 V·p/p<sub>max</sub>; R<sub>o</sub> = 100 Ω și I<sub>alim</sub> = 20 mA sunt ipoteze ale modelului (traductor tipic cu 3 fire). Returul comun poartă și curentul de alimentare, deci căderea lui se adaugă la semnal.</p></div>
+<div class="only-i"><div class="formula">I = 4 mA + 16 mA·p/p<sub>max</sub> &nbsp; dacă &nbsp; U<sub>alim</sub> ≥ U<sub>min</sub> + I·(R<sub>s</sub> + 2R<sub>fir</sub>) + U<sub>afișaj</sub></div>
+<div class="formula">I<sub>max,buclă</sub> = (U<sub>alim</sub> − U<sub>min</sub> − U<sub>afișaj</sub>) / (R<sub>s</sub> + 2R<sub>fir</sub>) &nbsp;·&nbsp; U<sub>ADC</sub> = I·R<sub>s</sub></div>
+<p class="muted">Traductorul este o sursă de curent: își ajustează tensiunea ca să țină curentul constant. O tensiune perturbatoare e<sub>n</sub> în serie cu bucla schimbă curentul doar cu e<sub>n</sub>/Z<sub>out</sub>; modelul presupune Z<sub>out</sub> = 1 MΩ. Benzi NAMUR NE 43: măsurare 3,8…20,5 mA, defect ≤ 3,6 mA sau ≥ 21 mA.</p></div>
+</section>
+<section class="card">
+<h2>4. Parametri</h2>
+<div class="fields">
+<label>Lungimea cablului L (m)<input id="L" type="number" min="1" max="3000" step="1" value="120"></label>
+<label>Secțiunea S (mm²)<select id="S"><option>0.5</option><option>0.75</option><option>1.5</option></select></label>
+<label>Presiunea p (bar)<input id="p" type="number" min="0" max="25" step="0.01" value="5"></label>
+<label class="only-v">R<sub>in</sub> receptor<select id="Rin"><option value="10000">10 kΩ</option><option value="100000" selected>100 kΩ</option><option value="1000000">1 MΩ</option></select></label>
+<label class="only-i">R<sub>s</sub> (rezistor de măsurare)<select id="Rs"><option value="250">250 Ω (1–5 V, PLC)</option><option value="120">120 Ω (ESP32)</option></select></label>
+<label class="only-i">U<sub>alim</sub> buclă<select id="Ua"><option value="24">24 V</option><option value="12">12 V</option></select></label>
+<label class="only-i">Afișaj în buclă (2 V)<select id="Disp"><option value="0">nu</option><option value="2">da</option></select></label>
+</div>
+<button id="record">Adaugă punctul curent</button>
+<label class="noPrint"><input id="mask" type="checkbox"> Ascunde rezultatele până calculez singur</label>
+<div id="error" class="error" role="alert"></div>
+<p class="muted">Cerințe: (C1) eroarea citirii ≤ 0,5 % din domeniu; (C2) un fir întrerupt trebuie recunoscut ca defect, nu ca presiune zero; (C3) la ESP32, tensiunea pe pin rămâne în domeniul recomandat 0,15…2,45 V (atenuare 11 dB).</p>
+</section>
+</div>
+
+<section class="card">
+<h2>5. Rezultate</h2>
+<div class="stats" id="stats"></div>
+<canvas id="bar" width="1180" height="300"></canvas>
+<p class="muted">Eroarea citirii (% din domeniu) în funcție de lungimea cablului, pentru varianta ta: albastru = 0–10 V cu retur comun, verde = 4–20 mA. Linia portocalie = limita C1 (0,5 %); punctul = lungimea curentă. La 4–20 mA curba se oprește acolo unde bugetul de tensiune nu se mai închide.</p>
+</section>
+
+<section class="card">
+<h2>6. Osciloscop la receptor și jurnal</h2>
+<canvas id="sc" width="1180" height="300"></canvas>
+<p class="muted">Ce vede receptorul în 100 ms (V la tensiune, mA la curent). Linia punctată = valoarea ideală pentru presiunea p.</p>
+<pre id="log" aria-live="polite"></pre>
+</section>
+
+<section class="card">
+<h2>7. Experimente ghidate</h2>
+<ol>
+<li><b>E1 – Cablul lung la tensiune:</b> în modul tensiune, notează eroarea pentru L = 50, 150 și 300 m. Compară cu relația ΔU = (I<sub>alim</sub> + I<sub>s</sub>)·R<sub>fir</sub> calculată de mână.</li>
+<li><b>E2 – Același cablu la curent:</b> treci pe 4–20 mA cu aceleași lungimi. De ce eroarea rămâne zero? Până la ce lungime se închide bugetul?</li>
+<li><b>E3 – Bugetul de tensiune:</b> cu R<sub>s</sub> = 250 Ω, pune U<sub>alim</sub> = 12 V și apoi afișajul în buclă. Crește presiunea la p<sub>max</sub>. Ce se întâmplă cu curentul și ce vede receptorul?</li>
+<li><b>E4 – Firul întrerupt:</b> rupe firul de semnal în ambele moduri. Ce citește receptorul? Care semnal îți permite să știi că e defect?</li>
+<li><b>E5 – Perturbații:</b> pornește perturbația de 50 Hz și bucla de masă, pe rând, în ambele moduri. Notează abaterea de vârf.</li>
+<li><b>E6 – ESP32:</b> la 4–20 mA, compară R<sub>s</sub> = 250 Ω cu 120 Ω la p<sub>max</sub>. Verifică cerința C3.</li>
+</ol>
+<p>Capturi solicitate: C1 – graficul de eroare cu ambele curbe; C2 – firul întrerupt în modul curent (bannerul NAMUR); C3 – bugetul de tensiune neînchis la 12 V.</p>
+</section>
+
+<section class="card">
+<h2>8. Tabel individual și export</h2>
+<div class="scroll"><table><thead><tr><th>Variantă</th><th>Semnal</th><th>L (m)</th><th>S (mm²)</th><th>p (bar)</th><th>Stare</th><th>Setare</th><th>Mărime citită</th><th>p citit (bar)</th><th>Eroare (% FS)</th><th>Diagnostic</th></tr></thead><tbody id="records"></tbody></table></div>
+<button id="csv">Export CSV</button><button id="json">Export JSON</button><label class="noPrint" style="display:inline-block;margin-left:6px">Import JSON <input id="imp" type="file" accept=".json,application/json"></label><button id="clear">Golește tabelul</button>
+<p class="muted">Rezultate calculate local, pe model; nu sunt măsurători fizice. Aplicația nu identifică studentul și nu transmite note.</p>
+</section>
+
+<section class="card">
+<h2>9. Întrebări pentru verificare</h2>
+<ol>
+<li>De ce căderea pe firul de retur comun intră în citire la 0–10 V, dar nu și la 4–20 mA?</li>
+<li>Ce înseamnă „zero viu” și de ce 1–5 V îl are, iar 0–10 V nu?</li>
+<li>Cum calculezi lungimea maximă a cablului pentru o buclă 4–20 mA?</li>
+<li>Ce vede un PLC dacă bugetul buclei nu se închide la 20 mA?</li>
+<li>De ce o tensiune perturbatoare în serie cu bucla nu schimbă curentul?</li>
+<li>Cum se rupe o buclă de masă? Numește două metode.</li>
+<li>De ce la ESP32 se folosește 120 Ω și nu 250 Ω?</li>
+<li>Când rămâne 0–10 V o alegere corectă?</li>
+</ol>
+<p class="muted">Surse: [1] All About Circuits, Lessons in Electric Circuits Vol. I, cap. 9, „Voltage Signal Systems” și „Current Signal Systems”; [2] Keithley, Low Level Measurements Handbook, ed. 7, §3.2.10 Ground Loops; [3] Beckhoff Information System, „NAMUR basic information” (NE 43); [4] Espressif, ESP-IDF „Analog to Digital Converter” (ESP32, 11 dB: 150…2450 mV); [5] CCM C06 – Semnale unificate. Simulare didactică pe model, cu ipotezele declarate în secțiunea 3.</p>
+</section>
+<footer class="muted">Material didactic · Conf. dr. ing. Florin Argatu · DMAECS, UPB · CCM L10 v1.0 · 16.11.2026 · aplicația nu transmite note</footer>
+</main>
+<script>
+'use strict';
+const VERSION='1.0',CODE='CCM-L10',N_MIN=1,N_EXEMPLU=7;
+const RHO=0.0175,RO=100,IALIM=0.020,ZOUT=1e6,EN=0.3,DGND=0.3,ADC_MIN=0.15,ADC_MAX=2.45,PIN_MAX=3.3;
+const $=id=>document.getElementById(id),num=id=>Number($(id).value);
+const fmt=(x,d=3)=>Number.isFinite(x)?x.toFixed(d).replace('.',','):'—';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let V=null,R=null,rows=[],t0=performance.now();
+const S={mode:'V',cut:false,gl:false,emi:false,tx:false};
+function log(m){const t=((performance.now()-t0)/1000).toFixed(1).padStart(6);$('log').textContent=`[${t} s] ${m}\n`+$('log').textContent}
+function nMax(){return $('grupa').value==='141ID'?30:29}
+function variant(n){const pmax=[6,10,16,25][n%4];return{n,pmax,p:Math.round(pmax*(0.30+0.015*n)*100)/100,L:50+10*n,S:n%2?0.75:0.5,Umin:10+n%3}}
+function code(){return `${CODE}-${V.g}-N${String(V.n).padStart(2,'0')}-v${VERSION}`}
+function apply(nForce){const n=nForce??num('n');if(!Number.isInteger(n)||n<N_MIN||n>nMax()){$('error').textContent=`N trebuie să fie întreg între ${N_MIN} și ${nMax()} pentru grupa ${$('grupa').value}.`;return}
+$('n').value=n;V={...variant(n),g:$('grupa').value};rows=[];drawRows();
+$('L').value=V.L;$('S').value=String(V.S);$('p').value=V.p;$('p').max=V.pmax;
+$('variant').innerHTML=`<b>${code()}</b> · traductor 0…${V.pmax} bar · p = ${fmt(V.p,2)} bar · L = ${V.L} m · S = ${fmt(V.S,2)} mm² (R<sub>fir</sub> = ${fmt(RHO*V.L/V.S,2)} Ω pe conductor) · U<sub>min</sub> traductor 2 fire = ${V.Umin} V`;
+log(`Varianta ${code()} aplicată`);recalc()}
+function inputs(){const L=num('L'),Sx=Number($('S').value),p=num('p');
+if(!(L>0&&L<=3000))throw Error('L trebuie să fie între 1 și 3000 m.');if(!(p>=0&&p<=V.pmax))throw Error(`p trebuie să fie între 0 și ${V.pmax} bar.`);
+return{L,S:Sx,p,Rw:RHO*L/Sx,Rin:Number($('Rin').value),Rs:Number($('Rs').value),Ua:Number($('Ua').value),Ud:Number($('Disp').value)}}
+function calcV(q,st){const Us=10*q.p/V.pmax;
+if(st.tx)return{read:0,ideal:Us,unit:'V',pr:0,diag:'traductor defect: ieșire 0 V – arată ca presiune zero',ok2:false,dc:0,amp:0};
+if(st.cut)return{read:0,ideal:Us,unit:'V',pr:0,diag:'fir întrerupt: receptorul citește 0 V – arată ca presiune zero',ok2:false,dc:0,amp:0};
+const Is=Us/q.Rin,dc=Us*q.Rin/(q.Rin+RO+q.Rw)+(IALIM+Is)*q.Rw+(st.gl?DGND:0),amp=st.emi?EN:0;
+return{read:dc,ideal:Us,unit:'V',pr:dc/10*V.pmax,diag:(st.gl?'buclă de masă activă · ':'')+(st.emi?'perturbație 50 Hz în citire · ':'')+'citire plauzibilă – nu se poate detecta o eroare',ok2:true,dc,amp}}
+function calcI(q,st){const Iset=4+16*q.p/V.pmax,Rl=q.Rs+2*q.Rw,Imax=(q.Ua-V.Umin-q.Ud)/Rl*1000;
+let I=st.tx?3.6:Iset,lim=false;if(I>Imax){I=Math.max(0,Imax);lim=true}if(st.cut)I=0;
+const amp=st.emi?EN/ZOUT*1000:0,U=I*q.Rs/1000;let diag;
+if(!st.cut&&!st.tx&&Imax<3.6)diag=`bucla nu pornește: U_alim prea mică (I max = ${fmt(Math.max(0,Imax),2)} mA) – alarmă de defect`;
+else if(I<=3.6)diag=st.cut?'I = 0 mA ≤ 3,6 mA → DEFECT detectat (fir întrerupt)':'I ≤ 3,6 mA → DEFECT detectat (NAMUR NE 43)';
+else if(I>=21)diag='I ≥ 21 mA → DEFECT (NAMUR NE 43)';
+else if(lim)diag=`bugetul nu se închide: curentul se blochează la ${fmt(I,2)} mA – citire FALSĂ`;
+else diag='citire validă (3,8…20,5 mA)'+(st.emi?' · perturbația nu schimbă curentul':'')+(st.gl?' · bucla are un singur punct de masă, la receptor':'');
+const pr=(I-4)/16*V.pmax;return{read:I,ideal:Iset,unit:'mA',pr,diag,ok2:true,dc:I,amp,lim,Imax,U}}
+function recalc(){if(!V)return;try{$('error').textContent='';const q=inputs(),c=S.mode==='V'?calcV(q,S):calcI(q,S);R={q,c};
+const err=(c.pr-q.p)/V.pmax*100,ok1=Math.abs(err)+(c.amp/(S.mode==='V'?10:16))*100<=0.5&&!(S.mode==='I'&&c.read<=3.6),ok2=S.mode==='I',ok3=S.mode==='I'?(c.U>=ADC_MIN&&c.U<=ADC_MAX):null;R.err=err;R.ok=[ok1,ok2,ok3];
+const st=S.mode==='V'?[['R fir (pe conductor)',fmt(q.Rw,2)+' Ω'],['Cădere pe retur',fmt((IALIM+c.ideal/q.Rin)*q.Rw*1000,1)+' mV'],['U ideal',fmt(c.ideal,3)+' V'],['U citit (c.c.)',fmt(c.read,3)+' V'],['Perturbație de vârf',fmt(c.amp,2)+' V'],['p citit',fmt(c.pr,3)+' bar'],['Eroare',fmt(err,2)+' % FS'],['Cerințe C1/C2/C3',`${ok1?'✓':'✗'} ${ok2?'✓':'✗'} –`]]
+:[['R buclă',fmt(q.Rs+2*q.Rw,1)+' Ω'],['I cerut',fmt(c.ideal,3)+' mA'],['I max buclă',fmt(c.Imax,2)+' mA'],['I citit',fmt(c.read,3)+' mA'],['U pe R_s (ADC)',fmt(c.U,3)+' V'],['p citit',c.read<=3.6?'DEFECT':fmt(c.pr,3)+' bar'],['Eroare',c.read<=3.6?'—':fmt(err,2)+' % FS'],['Cerințe C1/C2/C3',`${ok1?'✓':'✗'} ✓ ${ok3?'✓':'✗'}`]];
+$('stats').innerHTML=st.map(x=>`<div class="stat"><span>${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('');$('stats').style.visibility=$('mask').checked?'hidden':'visible';ui();chart()}catch(e){$('error').textContent=e.message}}
+function ui(){const v=S.mode==='V',c=R.c,q=R.q;document.body.className=v?'mv':'mi';$('mV').classList.toggle('sel',v);$('mI').classList.toggle('sel',!v);
+$('gV').style.display=v?'':'none';$('gI').style.display=v?'none':'';
+const on=(id,x)=>$(id).classList.toggle('on',!!x),cut=(id,x)=>$(id).classList.toggle('cut',!!x),cp=(id,cls)=>{const e=$(id);['act','warn','bad'].forEach(k=>e.classList.toggle(k,k===cls))};
+$('tL').textContent=`cablu ${q.L} m · ${fmt(q.S,2)} mm² · R fir = ${fmt(q.Rw,2)} Ω`;
+$('gnd1').style.display=v?'':'none';$('gLoop').style.display=S.gl&&v?'':'none';$('tGL').style.display=S.gl?'':'none';$('tGL').textContent=v?'buclă de masă: ΔU = 0,30 V se adaugă la semnal':'buclă de masă: fără efect – bucla 4–20 mA are un singur punct de masă';
+if(v){on('vP',!S.tx);on('vS',!S.cut&&!S.tx);cut('vS',S.cut);on('vR',!S.tx);cp('cTx',S.tx?'bad':'act');cp('cRx',S.cut||S.tx?'warn':(Math.abs(R.err)>0.5?'warn':'act'));cp('cPS','act');
+$('tTx').textContent=S.tx?'IEȘIRE 0 V':`U_s = ${fmt(c.ideal,3)} V`;$('tTx2').textContent=S.tx?'defect intern':`p = ${fmt(q.p,2)} bar`;
+$('tRet').textContent=S.tx?'':`ΔU retur = ${fmt((IALIM+c.ideal/q.Rin)*q.Rw*1000,0)} mV`;$('tRin').textContent=`R_in = ${q.Rin>=1e6?'1 MΩ':q.Rin/1000+' kΩ'}`;
+$('tRx').textContent=`Receptor: ${fmt(c.read,3)} V → ${fmt(c.pr,2)} bar`}
+else{const flow=c.read>0;on('iP',flow);on('iR',flow&&!S.cut);cut('iR',S.cut);on('iD',flow&&q.Ud>0);on('iRs',flow);
+cp('cTx',S.tx||S.cut?'bad':c.lim?'warn':'act');cp('cPS2',c.lim?'warn':'act');cp('cRs','act');cp('cDisp',q.Ud>0?'act':'');$('cDisp').style.opacity=q.Ud>0?1:.35;
+const esp=q.Rs===120,pinBad=esp&&c.U>PIN_MAX,adcWarn=esp&&(c.U>ADC_MAX||c.U<ADC_MIN);cp('cAdc',pinBad?'bad':adcWarn?'warn':'act');
+$('tTx').textContent=S.tx?'I = 3,6 mA':`I cerut = ${fmt(c.ideal,2)} mA`;$('tTx2').textContent=S.tx?'semnalizează defectul':`p = ${fmt(q.p,2)} bar`;
+$('tI').textContent=`I = ${fmt(c.read,2)} mA`;$('tRs').textContent=`R_s ${q.Rs} Ω`;$('tUa').textContent=`${q.Ua} V`;
+$('tAdc').textContent=`U = ${fmt(c.U,3)} V (${esp?'ESP32':'PLC 1–5 V'})`;
+$('tRx').textContent=c.read<=3.6?`Receptor: ${fmt(c.read,2)} mA → DEFECT`:`Receptor: ${fmt(c.read,3)} mA → ${fmt(c.pr,2)} bar`}
+$('tRx2').textContent=c.diag.length>66?c.diag.slice(0,64)+'…':c.diag;
+const b=$('banner');let t,bg,col;
+if(v&&(S.cut||S.tx)){t='PERICOL ASCUNS: receptorul citește 0 V, adică „0 bar”. Un fir rupt sau un traductor defect nu se deosebește de presiune zero (fără zero viu).';bg='#FCEBEB';col='#791F1F'}
+else if(!v&&c.read<=3.6&&!S.cut&&!S.tx&&c.Imax<3.6){t=`BUCLA NU PORNEȘTE: sursa de ${q.Ua} V nu acoperă U_min = ${V.Umin} V${q.Ud?' + afișajul de 2 V':''}. Receptorul vede ${fmt(c.read,2)} mA → alarmă de defect, nu o presiune falsă.`;bg='#FAEEDA';col='#633806'}
+else if(!v&&c.read<=3.6){t=`DEFECT DETECTAT: ${fmt(c.read,2)} mA ≤ 3,6 mA. Zero-ul viu (4 mA) separă defectul de presiunea minimă (NAMUR NE 43).`;bg='#EAF3DE';col='#27500A'}
+else if(!v&&c.lim){t=`BUGETUL NU SE ÎNCHIDE: ar trebui ${fmt(c.ideal,2)} mA, dar sursa nu poate împinge mai mult de ${fmt(c.Imax,2)} mA prin ${fmt(q.Rs+2*q.Rw,0)} Ω. Receptorul vede o presiune FALSĂ, fără alarmă.`;bg='#FAEEDA';col='#633806'}
+else if(!v&&q.Rs===250&&c.U>PIN_MAX){t=`Corect pentru un PLC (1–5 V): ${fmt(c.U,2)} V. Legat direct la un ESP32, același R_s = 250 Ω ar pune ${fmt(c.U,2)} V pe pin – peste 3,3 V. Pentru ESP32 alegeți 120 Ω.`;bg='#FAEEDA';col='#633806'}
+else if(!v&&q.Rs===120&&(c.U>ADC_MAX||c.U<ADC_MIN)){t=`ESP32: ${fmt(c.U,2)} V e în afara domeniului recomandat al ADC (0,15…2,45 V la 11 dB).`;bg='#FAEEDA';col='#633806'}
+else if(R.ok[0]){t=v?`Citire în toleranță: eroare ${fmt(R.err,2)} % FS. Dar un fir rupt nu ar fi recunoscut (cerința C2).`:`Citire corectă: ${fmt(c.read,3)} mA, eroare ${fmt(R.err,2)} % FS. Rezistența cablului nu contează cât timp bugetul se închide.`;bg='#EAF3DE';col='#27500A'}
+else{t=`Eroare prea mare: ${fmt(R.err,2)} % FS${c.amp?' plus perturbația de vârf':''} (C1 cere ≤ 0,5 %).`;bg='#FAEEDA';col='#633806'}
+b.textContent=t;b.style.background=bg;b.style.color=col;
+const set=(id,txt,al)=>{$(id).querySelector('b').textContent=txt;$(id).classList.toggle('alarm',!!al)};
+set('bCut',S.cut?'ÎNTRERUPT':'OK',S.cut);set('bGL',S.gl?'ACTIVĂ':'—',S.gl);set('bEMI',S.emi?'ACTIVĂ':'—',S.emi);set('bTx',S.tx?'DEFECT':'OK',S.tx)}
+function setupCanvas(cv){const r=window.devicePixelRatio||1,w=cv.clientWidth||cv.width;if(cv._w!==w*r){cv.width=w*r;cv.height=w*r*(cv.id==='sc'||cv.id==='bar'?300/1180:.3);cv._w=w*r}const c=cv.getContext('2d');c.setTransform(r,0,0,r,0,0);return{c,W:cv.width/r,H:cv.height/r}}
+function chart(){const{c,W,H}=setupCanvas($('bar')),q=R.q,L0=60,Rr=W-20,T=22,B=H-40,Lmax=Math.max(400,q.L*1.3),emax=4;
+const xx=L=>L0+(Rr-L0)*L/Lmax,yy=e=>T+(B-T)*(1-Math.min(emax,Math.max(0,e))/emax);
+c.clearRect(0,0,W,H);c.fillStyle='#fff';c.fillRect(0,0,W,H);c.font='13px system-ui';c.strokeStyle='#e3e9e5';c.fillStyle='#111';
+for(let e=0;e<=emax;e++){c.beginPath();c.moveTo(L0,yy(e));c.lineTo(Rr,yy(e));c.stroke();c.fillText(e+' %',18,yy(e)+4)}
+for(let k=0;k<=5;k++){const L=Lmax*k/5;c.fillText(Math.round(L)+' m',xx(L)-14,B+18)}c.fillText('L (m)',Rr-40,H-6);
+c.strokeStyle='#EA580C';c.setLineDash([6,4]);c.beginPath();c.moveTo(L0,yy(.5));c.lineTo(Rr,yy(.5));c.stroke();c.setLineDash([]);
+const st={cut:false,gl:false,emi:false,tx:false};
+c.beginPath();for(let i=0;i<=200;i++){const L=Lmax*i/200,qq={...q,L,Rw:RHO*L/q.S},r=calcV(qq,st),e=Math.abs((r.pr-q.p)/V.pmax*100);i?c.lineTo(xx(L),yy(e)):c.moveTo(xx(L),yy(e))}c.strokeStyle='#2563EB';c.lineWidth=3;c.stroke();
+c.beginPath();let started=false;for(let i=0;i<=200;i++){const L=Lmax*i/200,qq={...q,L,Rw:RHO*L/q.S},r=calcI(qq,st);if(r.lim)break;const e=Math.abs((r.pr-q.p)/V.pmax*100);started?c.lineTo(xx(L),yy(e)):(c.moveTo(xx(L),yy(e)),started=true)}c.strokeStyle='#16A34A';c.lineWidth=3;c.stroke();c.lineWidth=1;
+const cur=S.mode==='V'?calcV(q,st):calcI(q,st),ec=Math.abs((cur.pr-q.p)/V.pmax*100);c.beginPath();c.arc(xx(q.L),yy(ec),6,0,7);c.fillStyle=S.mode==='V'?'#2563EB':'#16A34A';c.fill();
+c.fillStyle='#2563EB';c.fillText('0–10 V, retur comun',L0+10,T+16);c.fillStyle='#16A34A';c.fillText('4–20 mA',L0+170,T+16);c.fillStyle='#EA580C';c.fillText('C1: 0,5 %',Rr-80,yy(.5)-6)}
+function draw(now){if(R){const{c,W,H}=setupCanvas($('sc')),cc=R.c,L0=60,Rr=W-15,T=24,B=H-26,v=S.mode==='V';
+const lo=v?Math.min(0,cc.ideal,cc.dc-cc.amp)-0.5:0,hi=v?Math.max(10,cc.dc+cc.amp)+0.3:24,yy=x=>B-(B-T)*(x-lo)/(hi-lo),xx=t=>L0+(Rr-L0)*t/0.1;
+c.clearRect(0,0,W,H);c.fillStyle='#fff';c.fillRect(0,0,W,H);c.font='13px system-ui';c.strokeStyle='#e3e9e5';c.fillStyle='#111';
+const step=v?2:4;for(let y=Math.ceil(lo/step)*step;y<=hi;y+=step){c.beginPath();c.moveTo(L0,yy(y));c.lineTo(Rr,yy(y));c.stroke();c.fillText(y+(v?' V':' mA'),6,yy(y)+4)}
+if(!v){c.fillStyle='#FCEBEB';c.fillRect(L0,yy(3.6),Rr-L0,yy(0)-yy(3.6));c.fillRect(L0,yy(hi),Rr-L0,yy(21)-yy(hi));c.fillStyle='#791F1F';c.fillText('defect ≤ 3,6 mA',L0+6,yy(1.5));c.fillText('defect ≥ 21 mA',L0+6,yy(22.6))}
+c.setLineDash([6,5]);c.strokeStyle='#121b19';c.beginPath();c.moveTo(L0,yy(cc.ideal));c.lineTo(Rr,yy(cc.ideal));c.stroke();c.setLineDash([]);
+const ph=(now-t0)/1000*2*Math.PI*0.5,beam=((now-t0)/1000%2)/2;c.beginPath();for(let i=0;i<=600*beam;i++){const t=0.1*i/600,y=cc.dc+cc.amp*Math.sin(2*Math.PI*50*t+ph);i?c.lineTo(xx(t),yy(y)):c.moveTo(xx(t),yy(y))}
+c.strokeStyle=v?'#2563EB':'#16A34A';c.lineWidth=2.4;c.stroke();c.lineWidth=1;c.fillStyle='#111';c.fillText(`100 ms · ${v?'tensiune la receptor':'curent în buclă'} · punctat = ideal`,L0+4,15)}
+requestAnimationFrame(draw)}
+function stateTxt(){return[S.cut?'fir intrerupt':'',S.gl?'bucla de masa':'',S.emi?'perturbatie 50 Hz':'',S.tx?'traductor defect':''].filter(Boolean).join(', ')||'normal'}
+function add(){if(!R)return;const q=R.q,c=R.c,v=S.mode==='V';rows.push({code:code(),sig:v?'0-10 V':'4-20 mA',L:q.L,S:q.S,p:q.p,st:stateTxt(),set:v?`Rin ${q.Rin} ohm`:`Rs ${q.Rs} ohm, ${q.Ua} V, afisaj ${q.Ud} V`,read:`${fmt(c.read,3)} ${c.unit}`,pr:(!v&&c.read<=3.6)?'DEFECT':fmt(c.pr,3),err:(!v&&c.read<=3.6)?'—':fmt(R.err,2),diag:c.diag});drawRows();log('Punct adăugat în tabel');saveLocal()}
+function drawRows(){$('records').innerHTML=rows.map(r=>`<tr><td>${esc(r.code)}</td><td>${esc(r.sig)}</td><td>${esc(r.L)}</td><td>${esc(r.S)}</td><td>${esc(r.p)}</td><td>${esc(r.st)}</td><td>${esc(r.set)}</td><td>${esc(r.read)}</td><td>${esc(r.pr)}</td><td>${esc(r.err)}</td><td>${esc(r.diag)}</td></tr>`).join('')}
+function download(name,content,type){const b=new Blob([content],{type}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function csv(){if(!V)return;const now=new Date().toLocaleString('ro-RO'),d=[['CODE','VERSION','N','Data','Cod varianta','Semnal','L (m)','S (mm2)','p (bar)','Stare','Setare','Marime citita','p citit (bar)','Eroare (% FS)','Diagnostic'],...rows.map(r=>[CODE,VERSION,V.n,now,r.code,r.sig,r.L,r.S,r.p,r.st,r.set,r.read,r.pr,r.err,r.diag])].map(r=>r.map(x=>String(x).replace(/;/g,',')).join(';')).join('\r\n');download(`${code()}_rezultate.csv`,'﻿'+d,'text/csv;charset=utf-8')}
+function exportJSON(){if(!V)return;download(`${code()}.json`,JSON.stringify({CODE,VERSION,N:V.n,grupa:V.g,rows},null,1),'application/json')}
+function importJSON(f){const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(o.CODE!==CODE||o.VERSION!==VERSION||!Number.isInteger(o.N)||!Array.isArray(o.rows))throw Error('fișierul nu este o fișă L10 v'+VERSION);$('grupa').value=o.grupa==='142ID'?'142ID':'141ID';apply(o.N);rows=o.rows.filter(x=>x&&typeof x==='object');drawRows();log(`Fișă importată: ${rows.length} rânduri`)}catch(e){$('error').textContent='Import respins: '+e.message}};r.readAsText(f)}
+function saveLocal(){try{localStorage.setItem(`${CODE}-${VERSION}`,JSON.stringify({N:V.n,grupa:V.g,rows}))}catch(e){$('error').textContent='Salvarea locală nu merge în acest browser – folosește Export JSON.'}}
+function restoreLocal(){try{const o=JSON.parse(localStorage.getItem(`${CODE}-${VERSION}`)||'null');if(o&&Number.isInteger(o.N)){$('grupa').value=o.grupa==='142ID'?'142ID':'141ID';apply(o.N);rows=Array.isArray(o.rows)?o.rows:[];drawRows();log('Fișa salvată local a fost restaurată');return true}}catch(e){}return false}
+function after(m){recalc();if(R)log(m+` → ${S.mode==='V'?'0–10 V':'4–20 mA'}: ${fmt(R.c.read,3)} ${R.c.unit} · ${R.c.diag}`)}
+$('mV').onclick=()=>{S.mode='V';after('Mod tensiune 0–10 V (3 fire)')};$('mI').onclick=()=>{S.mode='I';after('Mod curent 4–20 mA (2 fire)')};
+$('bCut').onclick=()=>{S.cut=!S.cut;after(S.cut?'DEFECT: fir de semnal întrerupt':'Fir de semnal refăcut')};
+$('bGL').onclick=()=>{S.gl=!S.gl;after(S.gl?'Buclă de masă activă (ΔU = 0,3 V)':'Buclă de masă eliminată')};
+$('bEMI').onclick=()=>{S.emi=!S.emi;after(S.emi?'Perturbație 50 Hz: 0,3 V induși în serie în cablu':'Perturbație eliminată')};
+$('bTx').onclick=()=>{S.tx=!S.tx;after(S.tx?'DEFECT intern al traductorului':'Traductor refăcut')};
+let deb;['L','S','p','Rin','Rs','Ua','Disp','mask'].forEach(id=>$(id).addEventListener('input',()=>{recalc();clearTimeout(deb);deb=setTimeout(()=>{if(R)log(`Parametri: L = ${R.q.L} m, S = ${R.q.S} mm², p = ${R.q.p} bar → ${fmt(R.c.read,3)} ${R.c.unit}`)},700)}));
+$('apply').onclick=()=>apply();$('ex7').onclick=()=>{$('grupa').value='141ID';apply(N_EXEMPLU)};$('grupa').onchange=()=>apply();
+$('record').onclick=add;$('csv').onclick=csv;$('json').onclick=exportJSON;$('imp').onchange=e=>{if(e.target.files[0])importJSON(e.target.files[0])};$('clear').onclick=()=>{rows=[];drawRows();saveLocal()};
+window.addEventListener('resize',()=>{if(R)chart()});
+log('Pornire simulator');if(!restoreLocal())apply();requestAnimationFrame(draw);
+</script>
+</body></html>

@@ -19,6 +19,7 @@ Aplicații interactive (HTML, fără instalare) pentru studiul senzorilor și al
 | L06 | Amplificatorul de instrumentație | [CCM_L06_Amplificator_Instrumentatie_v1.1.html](https://argatuflorin.github.io/CCM/L06/CCM_L06_Amplificator_Instrumentatie_v1.1.html) |
 | L07 | Filtrul anti-aliasing | [CCM_L07_Filtru_Anti_Aliasing_v1.0.html](https://argatuflorin.github.io/CCM/L07/CCM_L07_Filtru_Anti_Aliasing_v1.0.html) |
 | L08 | Filtrul universal cu variabile de stare | [CCM_L08_Filtru_Universal_v1.0.html](https://argatuflorin.github.io/CCM/L08/CCM_L08_Filtru_Universal_v1.0.html) |
+| L10 | Semnale unificate: tensiune și 4–20 mA | [CCM_L10_Semnale_Unificate_v1.0.html](https://argatuflorin.github.io/CCM/L10/CCM_L10_Semnale_Unificate_v1.0.html) |
 | C05 | Curs: Filtrele analogice (lecție interactivă) | [CCM_C05_Filtre_Analogice_v1.0.html](https://argatuflorin.github.io/CCM/C05/CCM_C05_Filtre_Analogice_v1.0.html) |
 
 ## Convenția de denumire
