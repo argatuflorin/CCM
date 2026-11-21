@@ -56,7 +56,7 @@ canvas{width:100%;border:1px solid var(--border);background:white;display:block}
 @media(max-width:850px){main{padding:12px}.cols{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 @media print{body{background:white}main{max-width:none;padding:0}.noPrint,button,canvas,#log{display:none!important}.card{break-inside:avoid;border:1px solid #888}.cols{display:block}table{font-size:10px}.w.on{animation:none}}
 </style>
-</head>
+<meta name="author" content="Florin-Ciprian Argatu"><meta name="copyright" content="© 2026 Florin-Ciprian Argatu – CC BY-NC-ND 4.0"><link rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/"></head>
 <body><main>
 <header>
 <div class="eyebrow">CCM · ANUL IV · L08 · SIMULATOR v1.0</div>
@@ -290,4 +290,6 @@ let deb;['R','C','Qd','Ustep','mask'].forEach(id=>$(id).addEventListener('input'
 $('apply').onclick=apply;$('record').onclick=add;$('csv').onclick=csv;$('clear').onclick=()=>{rows=[];drawRows()};
 log('Pornire simulator');apply();requestAnimationFrame(draw);
 </script>
+
+<div id="licenta-cc-by-nc-nd" style="clear:both;margin:24px auto 12px;padding:8px 12px;max-width:1100px;font:12px/1.5 system-ui,Arial,sans-serif;color:#666;text-align:center;opacity:.9">© 2026 Florin-Ciprian Argatu · UPB · FIE · DMAECS · Licență <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license" style="color:inherit">CC BY-NC-ND 4.0</a> · Utilizare necomercială, fără versiuni modificate, cu citarea autorului.</div>
 </body></html>
