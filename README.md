@@ -1,5 +1,7 @@
 # CCM — Laborator virtual
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24411921.svg)](https://doi.org/10.5281/zenodo.24411921)
+
 **Concepția asistată de calculator a convertoarelor de măsurare** · Inginerie electrică, anul IV
 Universitatea Națională de Știință și Tehnologie POLITEHNICA București · Facultatea de Inginerie Electrică
 
@@ -41,4 +43,4 @@ Florin Ciprian Argatu · [Pagina principală](https://argatuflorin.github.io/)
 
 Materialul este publicat sub licența [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/): poate fi distribuit cu citarea autorilor, doar în scop necomercial și fără versiuni modificate. Detalii în [`LICENSE`](LICENSE).
 
-**Citare:** folosiți butonul *Cite this repository* (dreapta sus, generat din [`CITATION.cff`](CITATION.cff)). DOI-ul permanent (Zenodo) se adaugă la primul release.
+**Citare:** folosiți butonul *Cite this repository* (dreapta sus, generat din [`CITATION.cff`](CITATION.cff)). DOI permanent (Zenodo, toate versiunile): [10.5281/zenodo.24411921](https://doi.org/10.5281/zenodo.24411921).
